@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J&J MarketFlow — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #CC0000; --red-bright: #FF2222; --red-dim: #6B0000;
+      --bg: #1a1a1a; --bg2: #212121; --bg3: #2a2a2a; --bg4: #333;
+      --text: #f0f0f0; --text2: #999; --text3: #555;
+      --border: rgba(255,255,255,0.08);
+      --font: 'Inter', sans-serif; --radius: 8px; --radius-lg: 12px;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.5; height: 100vh; overflow: hidden; }
+    .app-shell { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── Top tab bar ── */
+    .top-nav { display: flex; align-items: center; background: #111; border-bottom: 1px solid var(--border); padding: 0 20px; flex-shrink: 0; height: 42px; gap: 2px; }
+    .top-nav-brand { font-family: Georgia,serif; font-size: 14px; font-style: italic; font-weight: 700; color: var(--red); margin-right: 18px; letter-spacing: -0.3px; white-space: nowrap; }
+    .top-tab { padding: 0 18px; height: 100%; display: flex; align-items: center; font-size: 12px; font-weight: 500; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .top-tab:hover { color: var(--text); }
+    .top-tab.active { color: var(--text); border-bottom-color: var(--red); font-weight: 600; }
+
+    /* ── Role views ── */
+    .role-view { display: none; flex: 1; overflow: hidden; }
+    .role-view.active { display: flex; }
+    .app { display: flex; height: 100%; width: 100%; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: 205px; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+    .sb-brand { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); }
+    .jj-sub { font-size: 9px; font-weight: 600; color: var(--red); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 10px; opacity: 0.75; }
+    .nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+    .nav-item { padding: 9px 18px; font-size: 12px; color: var(--text2); cursor: pointer; transition: background 0.12s; }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .nav-item.active { background: var(--red-dim); color: var(--text); font-weight: 600; border-left: 3px solid var(--red); padding-left: 15px; }
+    .sb-bottom { padding: 14px 16px; border-top: 1px solid var(--border); }
+    .av { width: 30px; height: 30px; border-radius: 50%; background: var(--red-dim); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--red-bright); flex-shrink: 0; }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+    .topbar { padding: 15px 26px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .page-title { font-size: 19px; font-weight: 600; letter-spacing: -0.4px; }
+    .role-pill { background: var(--red-dim); color: var(--red-bright); font-size: 10px; font-weight: 600; padding: 3px 11px; border-radius: 20px; letter-spacing: 0.4px; }
+    .role-pill-solid { background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+
+    /* ── Pages ── */
+    .page { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .page.active { display: flex; }
+
+    /* ── DASHBOARD ── */
+    .content { flex: 1; overflow-y: auto; padding: 20px 26px; }
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+    .stat { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+    .stat-label { font-size: 10px; color: var(--text2); letter-spacing: 0.7px; text-transform: uppercase; font-weight: 500; margin-bottom: 8px; }
+    .stat-val { font-size: 30px; font-weight: 700; color: var(--red-bright); letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .col { display: flex; flex-direction: column; gap: 14px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
+    .card-title { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+    .role-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .role-row:last-of-type { border-bottom: none; }
+    .perm { padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .p-high { background: rgba(204,0,0,0.18); color: #FF6666; }
+    .p-med  { background: rgba(200,140,0,0.18); color: #FFB700; }
+    .p-view { background: rgba(90,90,90,0.25); color: #aaa; }
+    .edit-link { font-size: 10px; color: var(--red); cursor: pointer; }
+    .edit-link:hover { color: var(--red-bright); }
+    .alert-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .alert-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .adot { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .d-red { background: var(--red-bright); } .d-amb { background: #FFB700; } .d-blu { background: #4499FF; }
+    .alert-title { font-size: 12px; font-weight: 600; }
+    .alert-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+    .alert-cnt { margin-left: auto; font-weight: 700; color: var(--red-bright); font-size: 15px; }
+    .ap-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; overflow: hidden; transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease, max-height 0.3s ease 0.25s, padding 0.3s ease 0.25s; max-height: 60px; }
+    .ap-row:last-of-type { border-bottom: none; }
+    .ap-row.dismissing { transform: translateX(-115%); opacity: 0; }
+    .ap-row.dismissed { max-height: 0; padding-top: 0; padding-bottom: 0; border-bottom: none; }
+    .ap-empty { font-size: 11px; color: var(--text3); text-align: center; padding: 14px 0; display: none; }
+    .ap-btns { margin-left: auto; display: flex; gap: 6px; }
+    .ap-btn { border: none; border-radius: 4px; padding: 3px 10px; font-size: 10px; font-weight: 600; cursor: pointer; font-family: var(--font); }
+    .ap-ok { background: rgba(0,160,0,0.18); color: #55DD55; } .ap-ok:hover { background: rgba(0,160,0,0.3); }
+    .ap-no { background: rgba(204,0,0,0.18); color: #FF6666; } .ap-no:hover { background: rgba(204,0,0,0.3); }
+    .qbtn { width: 100%; background: rgba(204,0,0,0.1); color: var(--red-bright); border: 1px solid rgba(204,0,0,0.22); border-radius: var(--radius); padding: 9px 14px; font-size: 11px; font-weight: 500; cursor: pointer; text-align: left; font-family: var(--font); transition: background 0.12s; margin-bottom: 8px; }
+    .qbtn:last-child { margin-bottom: 0; } .qbtn:hover { background: rgba(204,0,0,0.2); }
+    .assign-btn { width: 100%; background: var(--red); color: #fff; border: none; border-radius: var(--radius); padding: 9px 14px; font-size: 11px; font-weight: 600; cursor: pointer; margin-top: 12px; font-family: var(--font); transition: background 0.12s; }
+    .assign-btn:hover { background: #aa0000; }
+
+    /* ── INVENTORY ── */
+    .inv-content { flex: 1; overflow-y: auto; padding: 20px 26px; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+    .search { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 14px; font-size: 12px; color: var(--text); outline: none; font-family: var(--font); transition: border-color 0.15s; }
+    .search:focus { border-color: rgba(204,0,0,0.5); }
+    .search::placeholder { color: var(--text3); }
+    .add-btn { background: var(--red); border: none; border-radius: var(--radius); padding: 9px 16px; font-size: 11px; font-weight: 600; color: #fff; cursor: pointer; font-family: var(--font); white-space: nowrap; transition: background 0.15s; }
+    .add-btn:hover { background: #aa0000; }
+    .dropdown { position: relative; }
+    .dd-toggle { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 13px; font-size: 11px; font-weight: 500; color: var(--text2); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; font-family: var(--font); transition: border-color 0.15s, color 0.15s; user-select: none; }
+    .dd-toggle:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+    .dd-toggle.filtered { border-color: var(--red); color: var(--red-bright); }
+    .dd-arrow { font-size: 8px; transition: transform 0.15s; }
+    .dropdown.open .dd-arrow { transform: rotate(180deg); }
+    .dd-menu { display: none; position: absolute; top: calc(100% + 5px); left: 0; background: var(--bg3); border: 1px solid rgba(255,255,255,0.13); border-radius: var(--radius); padding: 5px 0; min-width: 185px; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.55); }
+    .dropdown.open .dd-menu { display: block; }
+    .dd-item { padding: 8px 14px; font-size: 12px; color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 9px; transition: background 0.1s; }
+    .dd-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+    .dd-item.sel { color: var(--red-bright); font-weight: 600; }
+    .dd-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dd-sep { height: 1px; background: var(--border); margin: 4px 0; }
+    .pills { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pills:empty { margin-bottom: 0; }
+    .pill { background: rgba(204,0,0,0.14); border: 1px solid rgba(204,0,0,0.3); color: var(--red-bright); border-radius: 20px; padding: 3px 11px; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .pill-x { cursor: pointer; opacity: 0.65; font-size: 14px; line-height: 1; }
+    .pill-x:hover { opacity: 1; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .ccard { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; display: flex; flex-direction: column; transition: border-color 0.15s, opacity 0.4s ease, transform 0.4s ease; }
+    .ccard.dissolving { opacity: 0; transform: scale(0.95); pointer-events: none; }
+    .ccard:hover { border-color: rgba(255,255,255,0.13); }
+    .ccard.b-danger { border-color: rgba(204,0,0,0.28); }
+    .ccard.b-high { border-color: rgba(204,0,0,0.18); }
+    .ccard-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; }
+    .cname { font-size: 13px; font-weight: 600; letter-spacing: -0.15px; }
+    .ccat { font-size: 10px; color: var(--text3); margin-top: 3px; }
+    .rbadge { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .r-low  { background: rgba(0,160,0,0.16); color: #55DD55; }
+    .r-mod  { background: rgba(200,140,0,0.18); color: #FFB700; }
+    .r-high { background: rgba(204,0,0,0.18); color: #FF6666; }
+    .r-res  { background: rgba(130,0,210,0.18); color: #CC88FF; }
+    .desc { font-size: 11px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; flex: 1; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tag { background: var(--bg4); color: var(--text3); font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+    .actions { display: flex; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+    .abt { flex: 1; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); border-radius: 6px; padding: 6px; font-size: 11px; font-weight: 500; cursor: pointer; text-align: center; font-family: var(--font); transition: background 0.12s; }
+    .abt:hover { background: var(--bg4); color: var(--text); }
+    .abt-del { background: rgba(204,0,0,0.1); color: #FF6666; border-color: rgba(204,0,0,0.2); }
+    .abt-del:hover { background: rgba(204,0,0,0.2); }
+    .abt-pend { background: rgba(130,0,210,0.1); color: #CC88FF; border-color: rgba(130,0,210,0.2); }
+    .no-results { grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text3); font-size: 14px; }
+
+    /* ── USER MANAGEMENT ── */
+    .um-content { flex: 1; overflow-y: auto; padding: 20px 26px; }
+    .um-tab { background: transparent; border: none; border-radius: 6px; padding: 7px 16px; font-size: 12px; font-weight: 500; color: var(--text2); cursor: pointer; font-family: var(--font); transition: background 0.12s, color 0.12s; }
+    .um-tab.active { background: var(--red-dim); color: var(--text); font-weight: 600; }
+    .um-toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+    .um-search { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 14px; font-size: 12px; color: var(--text); outline: none; font-family: var(--font); }
+    .um-search::placeholder { color: var(--text3); }
+    .um-add-btn { background: var(--red); border: none; border-radius: var(--radius); padding: 9px 16px; font-size: 11px; font-weight: 600; color: #fff; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+    .um-add-btn:hover { background: #aa0000; }
+    .role-block { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 10px; overflow: hidden; }
+    .role-block-hdr { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; cursor: pointer; transition: background 0.12s; }
+    .role-block-hdr:hover { background: rgba(255,255,255,0.03); }
+    .rb-arrow { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+    .role-block.open .rb-arrow { transform: rotate(180deg); }
+    .role-block-body { padding: 0 18px 16px; border-top: 1px solid var(--border); }
+    .perm-section-title { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.9px; text-transform: uppercase; padding: 12px 0 10px; }
+    .perm-grid { display: flex; flex-direction: column; }
+    .perm-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); }
+    .perm-row:last-child { border-bottom: none; }
+    .toggle { width: 36px; height: 20px; border-radius: 20px; cursor: pointer; position: relative; flex-shrink: 0; transition: background 0.2s; }
+    .toggle.on  { background: var(--red); }
+    .toggle.off { background: var(--bg4); }
+    .toggle::after { content:''; position:absolute; width:14px; height:14px; border-radius:50%; background:#fff; top:3px; transition: left 0.2s; }
+    .toggle.on::after  { left: 19px; }
+    .toggle.off::after { left: 3px; }
+    .um-table { width: 100%; border-collapse: collapse; }
+    .um-table thead tr { border-bottom: 1px solid var(--border); }
+    .um-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; padding: 0 14px 10px; }
+    .um-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    .um-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .um-table tbody tr:last-child { border-bottom: none; }
+    .um-table td { padding: 11px 14px; font-size: 12px; vertical-align: middle; }
+    .um-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--red-dim); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--red-bright); margin-right: 10px; flex-shrink: 0; }
+    .um-name-cell { display: flex; align-items: center; }
+    .um-name { font-weight: 500; }
+    .um-email { font-size: 10px; color: var(--text3); margin-top: 2px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .s-active { background: #55DD55; } .s-inactive { background: var(--text3); } .s-pending { background: #FFB700; }
+    .um-role-badge { padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .ur-admin { background: rgba(204,0,0,0.18); color: #FF6666; }
+    .ur-lab   { background: rgba(68,153,255,0.15); color: #66AAFF; }
+    .ur-user  { background: rgba(90,90,90,0.25); color: #aaa; }
+    .ur-mktg  { background: rgba(130,0,210,0.18); color: #CC88FF; }
+    .ur-comp  { background: rgba(200,140,0,0.18); color: #FFB700; }
+    .um-action-btn { border: none; border-radius: 5px; padding: 4px 10px; font-size: 10px; font-weight: 600; cursor: pointer; font-family: var(--font); }
+    .um-remove { background: rgba(204,0,0,0.12); color: #FF6666; }
+    .um-remove:hover { background: rgba(204,0,0,0.25); }
+    .um-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:1000; align-items:center; justify-content:center; }
+    .um-modal { background:#222; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:28px 32px; width:380px; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+    .um-modal h3 { font-size:15px; font-weight:600; margin-bottom:20px; }
+    .um-field { margin-bottom:14px; }
+    .um-field label { display:block; font-size:10px; font-weight:600; color:var(--text3); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:6px; }
+    .um-field input, .um-field select { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:9px 12px; font-size:12px; color:var(--text); font-family:var(--font); outline:none; }
+    .um-field select option { background:var(--bg3); }
+    .um-modal-btns { display:flex; gap:10px; margin-top:22px; }
+    .um-modal-cancel { flex:1; background:var(--bg3); border:1px solid var(--border); color:var(--text2); border-radius:var(--radius); padding:9px; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font); }
+    .um-modal-save { flex:1; background:var(--red); border:none; color:#fff; border-radius:var(--radius); padding:9px; font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font); }
+    .um-modal-save:hover { background:#aa0000; }
+    /* ── USER MANAGEMENT END ── */
+    .chat-area { flex: 1; overflow-y: auto; padding: 22px 26px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+    .chat-area::-webkit-scrollbar { width: 3px; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+    .msg { display: flex; gap: 12px; align-items: flex-start; animation: fadeUp 0.25s ease; }
+    .msg.user { flex-direction: row-reverse; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .bot-av { background: var(--red-dim); color: var(--red-bright); }
+    .usr-av { background: #1b2a40; color: #4499FF; }
+    .bubble { max-width: 72%; padding: 13px 16px; font-size: 13px; line-height: 1.65; border-radius: 4px 14px 14px 14px; }
+    .bot-b { background: var(--bg2); border: 1px solid var(--border); }
+    .usr-b { background: var(--red-dim); border: 1px solid rgba(204,0,0,0.35); color: #fff; border-radius: 14px 4px 14px 14px; }
+    .tag-r { display: inline-flex; background: rgba(204,0,0,0.3); color: #FF8888; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .tag-g { display: inline-flex; background: rgba(0,160,0,0.2); color: #55DD55; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .typing-bubble { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px 14px 14px 14px; padding: 14px 18px; display: flex; gap: 5px; align-items: center; }
+    .typing-bubble span { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); display: inline-block; animation: bounce 1.2s infinite; }
+    .typing-bubble span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-bubble span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); background: var(--text2); } }
+    .chips { display: flex; gap: 8px; padding: 8px 26px 12px; flex-wrap: wrap; background: var(--bg); border-top: 1px solid var(--border); }
+    .chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 11px; color: var(--text2); cursor: pointer; transition: background 0.12s, color 0.12s; }
+    .chip:hover { background: var(--bg4); color: var(--text); }
+    .input-row { padding: 14px 26px; background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 10px; flex-shrink: 0; }
+    .chat-in { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 16px; font-size: 13px; color: var(--text); outline: none; font-family: var(--font); transition: border-color 0.15s; }
+    .chat-in:focus { border-color: rgba(204,0,0,0.45); }
+    .chat-in::placeholder { color: var(--text3); }
+    .send-btn { background: var(--red); border: none; border-radius: var(--radius); padding: 11px 24px; font-size: 13px; font-weight: 600; color: #fff; cursor: pointer; font-family: var(--font); transition: background 0.12s; }
+    .send-btn:hover { background: #aa0000; }
+    .send-btn:disabled { background: var(--bg4); color: var(--text3); cursor: not-allowed; }
+
+    /* ── IT ADMIN STYLES ── */
+    .it-content { flex: 1; overflow-y: auto; padding: 20px 26px; }
+
+    /* Activity Log table */
+    .log-toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+    .log-search { flex: 1; min-width: 180px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 14px; font-size: 12px; color: var(--text); outline: none; font-family: var(--font); }
+    .log-search::placeholder { color: var(--text3); }
+    .log-search:focus { border-color: rgba(204,0,0,0.5); }
+    .it-dd-toggle { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 13px; font-size: 11px; font-weight: 500; color: var(--text2); cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; font-family: var(--font); transition: border-color 0.15s, color 0.15s; user-select: none; }
+    .it-dd-toggle:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+    .it-dd-toggle.filtered { border-color: var(--red); color: var(--red-bright); }
+    .log-table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .log-table { width: 100%; border-collapse: collapse; }
+    .log-table thead tr { background: var(--bg3); border-bottom: 1px solid var(--border); }
+    .log-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; padding: 11px 14px; }
+    .log-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    .log-table tbody tr:last-child { border-bottom: none; }
+    .log-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+    .log-table td { padding: 10px 14px; font-size: 12px; vertical-align: middle; }
+    .log-badge { padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .lb-login    { background: rgba(68,153,255,0.15); color: #66AAFF; }
+    .lb-chemical { background: rgba(204,0,0,0.15); color: #FF7777; }
+    .lb-user     { background: rgba(130,0,210,0.15); color: #CC88FF; }
+    .lb-system   { background: rgba(90,90,90,0.22); color: #aaa; }
+    .lb-security { background: rgba(255,150,0,0.15); color: #FFB700; }
+    .sev-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+    .sev-info { background: #4499FF; } .sev-warn { background: #FFB700; } .sev-crit { background: #FF4444; }
+    .log-empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+
+    /* Security Controls */
+    .sec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .sec-stat { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+    .sec-stat-label { font-size: 10px; color: var(--text2); letter-spacing: 0.7px; text-transform: uppercase; font-weight: 500; margin-bottom: 8px; }
+    .sec-stat-val { font-size: 30px; font-weight: 700; letter-spacing: -1px; }
+    .sv-warn { color: #FFB700; } .sv-crit { color: #FF4444; } .sv-ok { color: #55DD55; } .sv-blue { color: #66AAFF; } .sv-red { color: var(--red-bright); }
+    .sec-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 16px; }
+    .locked-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .locked-row:last-of-type { border-bottom: none; }
+    .lock-av { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,68,68,0.15); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #FF7777; flex-shrink: 0; }
+    .lock-reason { font-size: 10px; color: var(--text3); margin-top: 2px; }
+    .unlock-btn { margin-left: auto; border: none; border-radius: 5px; padding: 4px 12px; font-size: 10px; font-weight: 600; background: rgba(68,153,255,0.15); color: #66AAFF; cursor: pointer; font-family: var(--font); transition: background 0.12s; }
+    .unlock-btn:hover { background: rgba(68,153,255,0.28); }
+    .sec-setting-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); }
+    .sec-setting-row:last-child { border-bottom: none; }
+    .sec-setting-val { font-weight: 600; color: var(--text); font-size: 12px; }
+    .it-sidebar { width: 205px; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+    .it-av { width: 30px; height: 30px; border-radius: 50%; background: var(--red-dim); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--red-bright); flex-shrink: 0; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── TOP TAB BAR ── -->
+  <div class="top-nav">
+    <div class="top-nav-brand">J &amp; J MarketFlow</div>
+    <div class="top-tab active" data-role="admin">Admin</div>
+    <div class="top-tab" data-role="it">IT Admin</div>
+  </div>
+
+  <!-- ── ADMIN ROLE VIEW ── -->
+  <div class="role-view active" id="role-admin">
+  <div class="app">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar">
+    <div class="sb-brand">
+      <div style="font-family:Georgia,serif;font-size:20px;font-style:italic;font-weight:700;color:#CC0000;line-height:1.15;letter-spacing:-0.3px;">J &amp; J<span style="display:block;">MarketFlow</span></div>
+      <div class="jj-sub">Admin Dashboard</div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active" data-page="dashboard">Dashboard</div>
+      <div class="nav-item" data-page="usermgmt">User Management</div>
+      <div class="nav-item" data-page="inventory">Chemical Inventory</div>
+      <div class="nav-item" data-page="placeholder" data-emoji="⚗️" data-msg="Risk Classification Coming Soon" data-sub="Chemical hazard levels and regulatory tagging will live here">Risk Classification</div>
+      <div class="nav-item" data-page="placeholder" data-emoji="🤖" data-msg="AI Monitoring Coming Soon" data-sub="Track AI decisions, flags, and recommendation logs here">AI Monitoring</div>
+      <div class="nav-item" data-page="placeholder" data-emoji="📋" data-msg="Activity Log Coming Soon" data-sub="Audit trails and admin action history will appear here">Activity Log</div>
+      <div class="nav-item" data-page="chatbot">AI Chatbot</div>
+    </div>
+    <div class="sb-bottom">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="av">JP</div>
+        <div>
+          <div style="font-size:11px;font-weight:600;">Jacob Prats</div>
+          <div style="font-size:9px;color:#555;margin-top:1px;">Admin · ID: ADM-4502</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <!-- ── PAGE: DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="topbar">
+        <div class="page-title">Overview</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:11px;color:#555;">Last logged in: March 23rd, 2028 · 8:45 AM</span>
+          <span class="role-pill">SYSTEM ADMINISTRATOR</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-row">
+          <div class="stat"><div class="stat-label">Pending Approvals</div><div class="stat-val" id="pendingStat">3</div></div>
+          <div class="stat"><div class="stat-label">AI Alerts</div><div class="stat-val">2</div></div>
+          <div class="stat"><div class="stat-label">Restricted Added Today</div><div class="stat-val">1</div></div>
+          <div class="stat"><div class="stat-label">Active Users</div><div class="stat-val">2</div></div>
+        </div>
+        <div class="two-col">
+          <div class="col">
+            <div class="card">
+              <div class="card-title">User Role Management</div>
+              <div class="role-row"><span>User</span><span class="perm p-view">Limited</span><span class="edit-link">Edit · Delete</span></div>
+              <div class="role-row"><span>Laboratory</span><span class="perm p-high">High</span><span class="edit-link">Edit · Delete</span></div>
+              <div class="role-row"><span>Company</span><span class="perm p-med">Medium</span><span class="edit-link">Edit · Delete</span></div>
+              <div class="role-row"><span>Marketing</span><span class="perm p-view">View Only</span><span class="edit-link">Edit · Delete</span></div>
+              <button class="assign-btn">+ Assign Role</button>
+            </div>
+            <div class="card">
+              <div class="card-title">Chemical Approvals</div>
+              <div class="ap-row"><span>Sulfuric Acid</span><div class="ap-btns"><button class="ap-btn ap-ok">Approve</button><button class="ap-btn ap-no">Reject</button></div></div>
+              <div class="ap-row"><span>Acetone</span><div class="ap-btns"><button class="ap-btn ap-ok">Approve</button><button class="ap-btn ap-no">Reject</button></div></div>
+              <div class="ap-row"><span>Formaldehyde</span><div class="ap-btns"><button class="ap-btn ap-ok">Approve</button><button class="ap-btn ap-no">Reject</button></div></div>
+              <div class="ap-empty">All approvals resolved</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card">
+              <div class="card-title">AI Alerts</div>
+              <div class="alert-row"><div class="adot d-red"></div><div style="flex:1"><div class="alert-title">High Risk Chemical Detected</div><div class="alert-sub">Formaldehyde flagged · just now</div></div><div class="alert-cnt">10</div></div>
+              <div class="alert-row"><div class="adot d-amb"></div><div style="flex:1"><div class="alert-title">Large Quantity Request</div><div class="alert-sub">Unusual bulk order · 2 min ago</div></div><div class="alert-cnt">5</div></div>
+              <div class="alert-row"><div class="adot d-blu"></div><div style="flex:1"><div class="alert-title">Restricted Access Attempt</div><div class="alert-sub">User ADM-302 · 14 min ago</div></div><div class="alert-cnt">1</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Quick Actions</div>
+              <button class="qbtn">Review AI Alert</button>
+              <button class="qbtn">Manage Chemicals</button>
+              <button class="qbtn">Update Risk Classifications</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: INVENTORY ── -->
+    <div class="page" id="page-inventory">
+      <div class="topbar">
+        <div class="page-title">Chemical Inventory Management</div>
+        <span style="font-size:11px;color:#555;">Manage all chemicals and products in the system</span>
+      </div>
+      <div class="inv-content">
+        <div class="toolbar">
+          <input class="search" id="searchInput" placeholder="Search by chemical name, category, or CAS number..." />
+          <div class="dropdown" id="riskDrop">
+            <div class="dd-toggle" id="riskToggle">Filter by Risk <span class="dd-arrow">▾</span></div>
+            <div class="dd-menu">
+              <div class="dd-item sel" data-val="all" data-label="">All Risk Levels</div>
+              <div class="dd-sep"></div>
+              <div class="dd-item" data-val="low"        data-label="Risk: Low">       <span class="dot" style="background:#55DD55"></span>Low</div>
+              <div class="dd-item" data-val="moderate"   data-label="Risk: Moderate">  <span class="dot" style="background:#FFB700"></span>Moderate</div>
+              <div class="dd-item" data-val="high"       data-label="Risk: High">      <span class="dot" style="background:#FF6666"></span>High</div>
+              <div class="dd-item" data-val="restricted" data-label="Restricted">      <span class="dot" style="background:#CC88FF"></span>Restricted</div>
+            </div>
+          </div>
+          <div class="dropdown" id="catDrop">
+            <div class="dd-toggle" id="catToggle">Filter by Category <span class="dd-arrow">▾</span></div>
+            <div class="dd-menu">
+              <div class="dd-item sel" data-val="all"               data-label="">All Categories</div>
+              <div class="dd-sep"></div>
+              <div class="dd-item" data-val="pain-relief"           data-label="Pain Relief">Pain Relief</div>
+              <div class="dd-item" data-val="first-aid"             data-label="First Aid">First Aid</div>
+              <div class="dd-item" data-val="lab-chemical"          data-label="Lab Chemical">Lab Chemical</div>
+              <div class="dd-item" data-val="industrial"            data-label="Industrial Chemical">Industrial Chemical</div>
+              <div class="dd-item" data-val="dermatology"           data-label="Dermatology">Dermatology</div>
+              <div class="dd-item" data-val="oncology"              data-label="Oncology">Oncology</div>
+              <div class="dd-item" data-val="neuroscience"          data-label="Neuroscience">Neuroscience</div>
+              <div class="dd-item" data-val="infectious-disease"    data-label="Infectious Disease">Infectious Disease</div>
+            </div>
+          </div>
+          <button class="add-btn">+ Add Chemical</button>
+        </div>
+        <div class="pills" id="pills"></div>
+        <div class="grid" id="chemGrid">
+          <div class="ccard" data-risk="low" data-cat="pain-relief">
+            <div class="ccard-hdr"><div><div class="cname">Tylenol Extra Strength Tablets</div><div class="ccat">Category: Pain Relief</div></div><span class="rbadge r-low">Risk: Low</span></div>
+            <div class="desc">Acetaminophen medication — relieves mild to moderate pain including headaches, muscle aches, and fever. Safe when used as directed.</div>
+            <div class="tags"><span class="tag">OTC</span><span class="tag">Acetaminophen</span><span class="tag">500mg</span></div>
+            <div class="actions"><button class="abt">Edit</button><button class="abt abt-del">Delete</button></div>
+          </div>
+          <div class="ccard" data-risk="low" data-cat="first-aid">
+            <div class="ccard-hdr"><div><div class="cname">Band-Aid Adhesive Bandages</div><div class="ccat">Category: First Aid</div></div><span class="rbadge r-low">Risk: Low</span></div>
+            <div class="desc">Sterile adhesive bandage designed for wound protection and healing. Made with breathable material to promote proper air circulation.</div>
+            <div class="tags"><span class="tag">First Aid</span><span class="tag">Sterile</span><span class="tag">Latex-free</span></div>
+            <div class="actions"><button class="abt">Edit</button><button class="abt abt-del">Delete</button></div>
+          </div>
+          <div class="ccard b-danger" data-risk="restricted" data-cat="lab-chemical">
+            <div class="ccard-hdr"><div><div class="cname">Formaldehyde Solution 37%</div><div class="ccat">Category: Lab Chemical</div></div><span class="rbadge r-res">Restricted</span></div>
+            <div class="desc">Fixative agent used in laboratory tissue preservation. Known carcinogen — requires EHS sign-off and full PPE at all times.</div>
+            <div class="tags"><span class="tag">OSHA</span><span class="tag">EPA</span><span class="tag">EHS Required</span><span class="tag">Carcinogen</span></div>
+            <div class="actions"><button class="abt">Edit</button><button class="abt abt-pend">Pending Approval</button><button class="abt abt-del">Delete</button></div>
+          </div>
+          <div class="ccard b-high" data-risk="high" data-cat="industrial">
+            <div class="ccard-hdr"><div><div class="cname">Sulfuric Acid 98%</div><div class="ccat">Category: Industrial Chemical</div></div><span class="rbadge r-high">Risk: High</span></div>
+            <div class="desc">Strong mineral acid used in manufacturing. Highly corrosive — requires specialized storage and handling per GHS classification standards.</div>
+            <div class="tags"><span class="tag">GHS</span><span class="tag">OSHA</span><span class="tag">Corrosive</span></div>
+            <div class="actions"><button class="abt">Edit</button><button class="abt abt-del">Delete</button></div>
+          </div>
+          <div class="ccard" data-risk="moderate" data-cat="dermatology">
+            <div class="ccard-hdr"><div><div class="cname">Neutrogena Hydro Boost Gel</div><div class="ccat">Category: Dermatology</div></div><span class="rbadge r-mod">Risk: Moderate</span></div>
+            <div class="desc">Hyaluronic acid-based hydrating gel for dry skin. Contains fragrance compounds that may cause sensitization in reactive skin types.</div>
+            <div class="tags"><span class="tag">Dermatology</span><span class="tag">Hyaluronic Acid</span><span class="tag">OTC</span></div>
+            <div class="actions"><button class="abt">Edit</button><button class="abt abt-del">Delete</button></div>
+          </div>
+          <div class="ccard b-danger" data-risk="restricted" data-cat="lab-chemical">
+            <div class="ccard-hdr"><div><div class="cname">Acetone (Reagent Grade)</div><div class="ccat">Category: Lab Chemical</div></div><span class="rbadge r-res">Restricted</span></div>
+            <div class="desc">High-purity solvent used in laboratory extraction and cleaning. Highly flammable — requires ventilated storage and restricted access.</div>
+            <div class="tags"><span class="tag">Flammable</span><span class="tag">GHS</span><span class="tag">Lab Use Only</span></div>
+            <div class="actions"><button class="abt">Edit</button><button class="abt abt-pend">Pending Approval</button><button class="abt abt-del">Delete</button></div>
+          </div>
+          <div class="no-results" id="noResults" style="display:none;">No chemicals match the selected filters.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: USER MANAGEMENT ── -->
+    <div class="page" id="page-usermgmt">
+      <div class="topbar">
+        <div class="page-title">User Management</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:11px;color:#555;">Manage roles, permissions and access control</span>
+          <span class="role-pill">SYSTEM ADMINISTRATOR</span>
+        </div>
+      </div>
+      <div class="um-content">
+
+        <!-- Tab switcher -->
+        <div style="display:flex;gap:0;margin-bottom:20px;background:var(--bg3);border-radius:var(--radius);padding:3px;width:fit-content;border:1px solid var(--border);">
+          <button class="um-tab active" id="tabRoles" onclick="switchUmTab('roles')">Role Permissions</button>
+          <button class="um-tab" id="tabUsers" onclick="switchUmTab('users')">Users</button>
+        </div>
+
+        <!-- ── ROLES TAB ── -->
+        <div id="umRolesPane">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">Click a role to expand and edit its permissions.</div>
+          <div id="rolesAccordion">
+
+            <!-- Admin -->
+            <div class="role-block" id="rb-admin">
+              <div class="role-block-hdr" onclick="toggleRole('admin')">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span class="um-role-badge ur-admin">Admin</span>
+                  <span style="font-size:12px;font-weight:500;">System Administrator</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:10px;color:var(--text3);">2 users</span>
+                  <span class="rb-arrow">▾</span>
+                </div>
+              </div>
+              <div class="role-block-body" id="rbb-admin">
+                <div class="perm-section-title">Access &amp; Visibility</div>
+                <div class="perm-grid">
+                  <div class="perm-row"><span>View all chemical inventory</span><div class="toggle on" data-role="admin" data-perm="view-inventory"></div></div>
+                  <div class="perm-row"><span>Add / edit chemicals</span><div class="toggle on" data-role="admin" data-perm="edit-chemicals"></div></div>
+                  <div class="perm-row"><span>Approve chemical entries</span><div class="toggle on" data-role="admin" data-perm="approve-chemicals"></div></div>
+                  <div class="perm-row"><span>View restricted chemicals</span><div class="toggle on" data-role="admin" data-perm="view-restricted"></div></div>
+                  <div class="perm-row"><span>Access analytics dashboard</span><div class="toggle on" data-role="admin" data-perm="analytics"></div></div>
+                  <div class="perm-row"><span>View AI chatbot</span><div class="toggle on" data-role="admin" data-perm="chatbot"></div></div>
+                  <div class="perm-row"><span>Configure AI restrictions</span><div class="toggle on" data-role="admin" data-perm="ai-config"></div></div>
+                  <div class="perm-row"><span>Manage user roles</span><div class="toggle on" data-role="admin" data-perm="manage-users"></div></div>
+                  <div class="perm-row"><span>View activity logs</span><div class="toggle on" data-role="admin" data-perm="activity-log"></div></div>
+                  <div class="perm-row"><span>Place orders</span><div class="toggle on" data-role="admin" data-perm="place-orders"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Laboratory -->
+            <div class="role-block" id="rb-lab">
+              <div class="role-block-hdr" onclick="toggleRole('lab')">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span class="um-role-badge ur-lab">Laboratory</span>
+                  <span style="font-size:12px;font-weight:500;">Lab Researchers &amp; EHS Officers</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:10px;color:var(--text3);">3 users</span>
+                  <span class="rb-arrow">▾</span>
+                </div>
+              </div>
+              <div class="role-block-body" id="rbb-lab" style="display:none;">
+                <div class="perm-section-title">Access &amp; Visibility</div>
+                <div class="perm-grid">
+                  <div class="perm-row"><span>View all chemical inventory</span><div class="toggle on" data-role="lab" data-perm="view-inventory"></div></div>
+                  <div class="perm-row"><span>Add / edit chemicals</span><div class="toggle off" data-role="lab" data-perm="edit-chemicals"></div></div>
+                  <div class="perm-row"><span>Approve chemical entries</span><div class="toggle off" data-role="lab" data-perm="approve-chemicals"></div></div>
+                  <div class="perm-row"><span>View restricted chemicals</span><div class="toggle on" data-role="lab" data-perm="view-restricted"></div></div>
+                  <div class="perm-row"><span>Access analytics dashboard</span><div class="toggle off" data-role="lab" data-perm="analytics"></div></div>
+                  <div class="perm-row"><span>View AI chatbot</span><div class="toggle on" data-role="lab" data-perm="chatbot"></div></div>
+                  <div class="perm-row"><span>Configure AI restrictions</span><div class="toggle off" data-role="lab" data-perm="ai-config"></div></div>
+                  <div class="perm-row"><span>Manage user roles</span><div class="toggle off" data-role="lab" data-perm="manage-users"></div></div>
+                  <div class="perm-row"><span>View activity logs</span><div class="toggle off" data-role="lab" data-perm="activity-log"></div></div>
+                  <div class="perm-row"><span>Place orders</span><div class="toggle on" data-role="lab" data-perm="place-orders"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compliance -->
+            <div class="role-block" id="rb-comp">
+              <div class="role-block-hdr" onclick="toggleRole('comp')">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span class="um-role-badge ur-comp">Compliance</span>
+                  <span style="font-size:12px;font-weight:500;">EHS &amp; Compliance Officers</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:10px;color:var(--text3);">1 user</span>
+                  <span class="rb-arrow">▾</span>
+                </div>
+              </div>
+              <div class="role-block-body" id="rbb-comp" style="display:none;">
+                <div class="perm-section-title">Access &amp; Visibility</div>
+                <div class="perm-grid">
+                  <div class="perm-row"><span>View all chemical inventory</span><div class="toggle on" data-role="comp" data-perm="view-inventory"></div></div>
+                  <div class="perm-row"><span>Add / edit chemicals</span><div class="toggle off" data-role="comp" data-perm="edit-chemicals"></div></div>
+                  <div class="perm-row"><span>Approve chemical entries</span><div class="toggle on" data-role="comp" data-perm="approve-chemicals"></div></div>
+                  <div class="perm-row"><span>View restricted chemicals</span><div class="toggle on" data-role="comp" data-perm="view-restricted"></div></div>
+                  <div class="perm-row"><span>Access analytics dashboard</span><div class="toggle on" data-role="comp" data-perm="analytics"></div></div>
+                  <div class="perm-row"><span>View AI chatbot</span><div class="toggle on" data-role="comp" data-perm="chatbot"></div></div>
+                  <div class="perm-row"><span>Configure AI restrictions</span><div class="toggle off" data-role="comp" data-perm="ai-config"></div></div>
+                  <div class="perm-row"><span>Manage user roles</span><div class="toggle off" data-role="comp" data-perm="manage-users"></div></div>
+                  <div class="perm-row"><span>View activity logs</span><div class="toggle on" data-role="comp" data-perm="activity-log"></div></div>
+                  <div class="perm-row"><span>Place orders</span><div class="toggle off" data-role="comp" data-perm="place-orders"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Marketing -->
+            <div class="role-block" id="rb-mktg">
+              <div class="role-block-hdr" onclick="toggleRole('mktg')">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span class="um-role-badge ur-mktg">Marketing</span>
+                  <span style="font-size:12px;font-weight:500;">Marketing &amp; Analytics Team</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:10px;color:var(--text3);">2 users</span>
+                  <span class="rb-arrow">▾</span>
+                </div>
+              </div>
+              <div class="role-block-body" id="rbb-mktg" style="display:none;">
+                <div class="perm-section-title">Access &amp; Visibility</div>
+                <div class="perm-grid">
+                  <div class="perm-row"><span>View all chemical inventory</span><div class="toggle off" data-role="mktg" data-perm="view-inventory"></div></div>
+                  <div class="perm-row"><span>Add / edit chemicals</span><div class="toggle off" data-role="mktg" data-perm="edit-chemicals"></div></div>
+                  <div class="perm-row"><span>Approve chemical entries</span><div class="toggle off" data-role="mktg" data-perm="approve-chemicals"></div></div>
+                  <div class="perm-row"><span>View restricted chemicals</span><div class="toggle off" data-role="mktg" data-perm="view-restricted"></div></div>
+                  <div class="perm-row"><span>Access analytics dashboard</span><div class="toggle on" data-role="mktg" data-perm="analytics"></div></div>
+                  <div class="perm-row"><span>View AI chatbot</span><div class="toggle off" data-role="mktg" data-perm="chatbot"></div></div>
+                  <div class="perm-row"><span>Configure AI restrictions</span><div class="toggle off" data-role="mktg" data-perm="ai-config"></div></div>
+                  <div class="perm-row"><span>Manage user roles</span><div class="toggle off" data-role="mktg" data-perm="manage-users"></div></div>
+                  <div class="perm-row"><span>View activity logs</span><div class="toggle off" data-role="mktg" data-perm="activity-log"></div></div>
+                  <div class="perm-row"><span>Place orders</span><div class="toggle off" data-role="mktg" data-perm="place-orders"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- User -->
+            <div class="role-block" id="rb-user">
+              <div class="role-block-hdr" onclick="toggleRole('user')">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span class="um-role-badge ur-user">User</span>
+                  <span style="font-size:12px;font-weight:500;">Standard / Consumer Users</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:10px;color:var(--text3);">12 users</span>
+                  <span class="rb-arrow">▾</span>
+                </div>
+              </div>
+              <div class="role-block-body" id="rbb-user" style="display:none;">
+                <div class="perm-section-title">Access &amp; Visibility</div>
+                <div class="perm-grid">
+                  <div class="perm-row"><span>View all chemical inventory</span><div class="toggle off" data-role="user" data-perm="view-inventory"></div></div>
+                  <div class="perm-row"><span>Add / edit chemicals</span><div class="toggle off" data-role="user" data-perm="edit-chemicals"></div></div>
+                  <div class="perm-row"><span>Approve chemical entries</span><div class="toggle off" data-role="user" data-perm="approve-chemicals"></div></div>
+                  <div class="perm-row"><span>View restricted chemicals</span><div class="toggle off" data-role="user" data-perm="view-restricted"></div></div>
+                  <div class="perm-row"><span>Access analytics dashboard</span><div class="toggle off" data-role="user" data-perm="analytics"></div></div>
+                  <div class="perm-row"><span>View AI chatbot</span><div class="toggle on" data-role="user" data-perm="chatbot"></div></div>
+                  <div class="perm-row"><span>Configure AI restrictions</span><div class="toggle off" data-role="user" data-perm="ai-config"></div></div>
+                  <div class="perm-row"><span>Manage user roles</span><div class="toggle off" data-role="user" data-perm="manage-users"></div></div>
+                  <div class="perm-row"><span>View activity logs</span><div class="toggle off" data-role="user" data-perm="activity-log"></div></div>
+                  <div class="perm-row"><span>Place orders</span><div class="toggle on" data-role="user" data-perm="place-orders"></div></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── USERS TAB ── -->
+        <div id="umUsersPane" style="display:none;">
+          <div class="um-toolbar">
+            <input class="um-search" id="umSearch" placeholder="Search by name, email, or role..." />
+            <button class="um-add-btn" id="umAddBtn">+ Add User</button>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+            <table class="um-table">
+              <thead><tr><th>User</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="umTableBody">
+                <tr data-name="jacob prats" data-role="admin"><td><div class="um-name-cell"><div class="um-avatar">JP</div><div><div class="um-name">Jacob Prats</div><div class="um-email">j.prats@jnj.com</div></div></div></td><td><span class="um-role-badge ur-admin">Admin</span></td><td>IT &amp; Systems</td><td><span class="status-dot s-active"></span>Active</td><td><button class="um-action-btn um-remove">Remove</button></td></tr>
+                <tr data-name="sarah chen" data-role="laboratory"><td><div class="um-name-cell"><div class="um-avatar" style="background:rgba(68,153,255,0.15);color:#66AAFF;">SC</div><div><div class="um-name">Sarah Chen</div><div class="um-email">s.chen@jnj.com</div></div></div></td><td><span class="um-role-badge ur-lab">Laboratory</span></td><td>R&amp;D Labs</td><td><span class="status-dot s-active"></span>Active</td><td><button class="um-action-btn um-remove">Remove</button></td></tr>
+                <tr data-name="marcus williams" data-role="compliance"><td><div class="um-name-cell"><div class="um-avatar" style="background:rgba(200,140,0,0.15);color:#FFB700;">MW</div><div><div class="um-name">Marcus Williams</div><div class="um-email">m.williams@jnj.com</div></div></div></td><td><span class="um-role-badge ur-comp">Compliance</span></td><td>EHS &amp; Safety</td><td><span class="status-dot s-active"></span>Active</td><td><button class="um-action-btn um-remove">Remove</button></td></tr>
+                <tr data-name="priya patel" data-role="marketing"><td><div class="um-name-cell"><div class="um-avatar" style="background:rgba(130,0,210,0.15);color:#CC88FF;">PP</div><div><div class="um-name">Priya Patel</div><div class="um-email">p.patel@jnj.com</div></div></div></td><td><span class="um-role-badge ur-mktg">Marketing</span></td><td>Marketing &amp; Analytics</td><td><span class="status-dot s-pending"></span>Pending</td><td><button class="um-action-btn um-remove">Remove</button></td></tr>
+                <tr data-name="tom nguyen" data-role="user"><td><div class="um-name-cell"><div class="um-avatar" style="background:rgba(90,90,90,0.25);color:#aaa;">TN</div><div><div class="um-name">Tom Nguyen</div><div class="um-email">t.nguyen@jnj.com</div></div></div></td><td><span class="um-role-badge ur-user">User</span></td><td>Procurement</td><td><span class="status-dot s-active"></span>Active</td><td><button class="um-action-btn um-remove">Remove</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="um-modal-overlay" id="umModal">
+      <div class="um-modal">
+        <h3>Add New User</h3>
+        <div class="um-field"><label>Full Name</label><input type="text" id="umNewName" placeholder="e.g. Jane Smith" /></div>
+        <div class="um-field"><label>Email</label><input type="text" id="umNewEmail" placeholder="e.g. j.smith@jnj.com" /></div>
+        <div class="um-field"><label>Department</label><input type="text" id="umNewDept" placeholder="e.g. R&amp;D Labs" /></div>
+        <div class="um-field"><label>Role</label>
+          <select id="umNewRole">
+            <option value="admin">Admin</option>
+            <option value="laboratory">Laboratory</option>
+            <option value="compliance">Compliance</option>
+            <option value="marketing">Marketing</option>
+            <option value="user" selected>User</option>
+          </select>
+        </div>
+        <div class="um-modal-btns">
+          <button class="um-modal-cancel" id="umModalCancel">Cancel</button>
+          <button class="um-modal-save" id="umModalSave">Add User</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: CHATBOT ── -->
+    <div class="page" id="page-chatbot">
+      <div class="topbar">
+        <div class="page-title">AI Chatbot</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:11px;color:#555;">Compliance &amp; Risk Management</span>
+          <span class="role-pill-solid">ADMIN MODE</span>
+        </div>
+      </div>
+      <div class="chat-area" id="chatArea">
+        <div class="msg">
+          <div class="msg-av bot-av">AI</div>
+          <div class="bubble bot-b">Hello Jacob! I'm your compliance AI assistant. I can help you review chemical risk classifications, flag unusual purchasing patterns, and manage AI recommendation settings. What would you like to do today?</div>
+        </div>
+        <div class="msg user">
+          <div class="msg-av usr-av">JP</div>
+          <div class="bubble usr-b">Flag all high-risk chemicals added in the last 24 hours.</div>
+        </div>
+        <div class="msg">
+          <div class="msg-av bot-av">AI</div>
+          <div class="bubble bot-b">I found <strong>2 high-risk entries</strong> added in the last 24 hours:<br><br><span class="tag-r">HIGH RISK</span>&nbsp;<strong>Formaldehyde 37%</strong> — awaiting admin approval. Classified as a known carcinogen. EHS sign-off required.<br><br><span class="tag-r">RESTRICTED</span>&nbsp;<strong>Sulfuric Acid 98%</strong> — access attempted by 2 users without correct permissions. Recommend locking access pending review.<br><br>Would you like me to send alert notifications to EHS officers?</div>
+        </div>
+        <div class="msg user">
+          <div class="msg-av usr-av">JP</div>
+          <div class="bubble usr-b">Yes, notify EHS. Also check if any consumers were shown restricted recommendations.</div>
+        </div>
+        <div class="msg">
+          <div class="msg-av bot-av">AI</div>
+          <div class="bubble bot-b"><span class="tag-g">DONE</span>&nbsp;EHS notification sent to 3 officers on record.<br><br>Checking recommendation logs... <strong>No restricted chemicals were surfaced to consumer-role users.</strong> Role-based filters are active and functioning correctly.</div>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip">Review pending approvals</div>
+        <div class="chip">Show unusual orders</div>
+        <div class="chip">Update AI restrictions</div>
+        <div class="chip">Generate compliance report</div>
+      </div>
+      <div class="input-row">
+        <input class="chat-in" id="chatInput" placeholder="Ask about chemicals, compliance, user access..." />
+        <button class="send-btn" id="sendBtn">Send</button>
+      </div>
+    </div>
+
+    <!-- ── PAGE: PLACEHOLDER ── -->
+    <div class="page" id="page-placeholder">
+      <div class="topbar">
+        <div class="page-title" id="placeholderTitle">Coming Soon</div>
+      </div>
+      <div class="content" style="display:flex;align-items:center;justify-content:center;flex:1;">
+        <div style="text-align:center;color:var(--text3);">
+          <div style="font-size:52px;margin-bottom:16px;" id="placeholderEmoji">⚙️</div>
+          <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;" id="placeholderName">Coming Soon</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" id="placeholderSub">This tab is under construction</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .main (admin) -->
+  </div><!-- end .app (admin) -->
+  </div><!-- end #role-admin -->
+
+  <!-- ── IT ADMIN ROLE VIEW ── -->
+  <div class="role-view" id="role-it">
+  <div class="app">
+
+    <!-- IT Sidebar -->
+    <div class="it-sidebar">
+      <div class="sb-brand">
+        <div style="font-family:Georgia,serif;font-size:20px;font-style:italic;font-weight:700;color:#CC0000;line-height:1.15;letter-spacing:-0.3px;">J &amp; J<span style="display:block;">MarketFlow</span></div>
+        <div style="font-size:9px;font-weight:600;color:#CC0000;letter-spacing:1.5px;text-transform:uppercase;margin-top:10px;opacity:0.75;">IT Dashboard</div>
+      </div>
+      <div class="nav">
+        <div class="it-nav-item nav-item active" data-itpage="it-dashboard">Dashboard</div>
+        <div class="it-nav-item nav-item" data-itpage="it-activitylog">Activity Log</div>
+        <div class="it-nav-item nav-item" data-itpage="it-security">Security Controls</div>
+        <div class="it-nav-item nav-item" data-itpage="it-placeholder">System Health</div>
+      </div>
+      <div class="sb-bottom">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="it-av">MK</div>
+          <div>
+            <div style="font-size:11px;font-weight:600;">Maya Kim</div>
+            <div style="font-size:9px;color:#555;margin-top:1px;">IT Admin · ID: IT-0091</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IT Main -->
+    <div class="main">
+
+      <!-- IT DASHBOARD -->
+      <div class="page active" id="page-it-dashboard">
+        <div class="topbar">
+          <div class="page-title">IT Overview</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:11px;color:#555;">Last logged in: May 3rd, 2026 · 9:12 AM</span>
+            <span style="background:rgba(204,0,0,0.18);color:#FF6666;font-size:10px;font-weight:600;padding:3px 11px;border-radius:20px;letter-spacing:0.4px;">IT ADMINISTRATOR</span>
+          </div>
+        </div>
+        <div class="content">
+          <div class="stats-row">
+            <div class="stat"><div class="stat-label">Failed Logins (24h)</div><div class="stat-val" style="color:#FFB700;">7</div></div>
+            <div class="stat"><div class="stat-label">Locked Accounts</div><div class="stat-val" style="color:#FF4444;">3</div></div>
+            <div class="stat"><div class="stat-label">Active Sessions</div><div class="stat-val" style="color:#55DD55;">14</div></div>
+            <div class="stat"><div class="stat-label">Security Alerts</div><div class="stat-val" style="color:#FF6666;">2</div></div>
+          </div>
+          <div class="two-col">
+            <div class="col">
+              <div class="card">
+                <div class="card-title">Recent Security Events</div>
+                <div class="alert-row"><div class="adot" style="background:#FF4444;margin-top:4px;"></div><div style="flex:1"><div class="alert-title">Brute Force Attempt</div><div class="alert-sub">User lab.user@jnj.com · 5 failed logins · 3 min ago</div></div></div>
+                <div class="alert-row"><div class="adot" style="background:#FFB700;margin-top:4px;"></div><div style="flex:1"><div class="alert-title">Off-Hours Access</div><div class="alert-sub">User m.williams@jnj.com · login at 2:14 AM · 6 hrs ago</div></div></div>
+                <div class="alert-row"><div class="adot" style="background:#FF6666;margin-top:4px;"></div><div style="flex:1"><div class="alert-title">New Device Login</div><div class="alert-sub">User p.patel@jnj.com · unrecognized device · 1 hr ago</div></div></div>
+              </div>
+              <div class="card">
+                <div class="card-title">Quick Actions</div>
+                <button class="qbtn" style="background:rgba(68,153,255,0.1);border-color:rgba(68,153,255,0.22);color:#FF6666;" onclick="switchITPage('it-activitylog')">View Activity Log</button>
+                <button class="qbtn" style="background:rgba(68,153,255,0.1);border-color:rgba(68,153,255,0.22);color:#FF6666;" onclick="switchITPage('it-security')">Manage Locked Accounts</button>
+                <button class="qbtn" style="background:rgba(68,153,255,0.1);border-color:rgba(68,153,255,0.22);color:#FF6666;" onclick="switchITPage('it-placeholder')">System Health</button>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card">
+                <div class="card-title">Session Overview</div>
+                <div class="role-row"><span>Admin sessions</span><span style="color:#FF7777;font-weight:600;">2</span></div>
+                <div class="role-row"><span>Lab sessions</span><span style="color:#FF6666;font-weight:600;">5</span></div>
+                <div class="role-row"><span>Marketing sessions</span><span style="color:#CC88FF;font-weight:600;">3</span></div>
+                <div class="role-row"><span>User sessions</span><span style="color:#aaa;font-weight:600;">4</span></div>
+                <div class="role-row" style="border:none;"><span>Avg session duration</span><span style="color:#55DD55;font-weight:600;">22 min</span></div>
+              </div>
+              <div class="card">
+                <div class="card-title">MFA Status</div>
+                <div class="role-row"><span>MFA Enabled Users</span><span style="color:#55DD55;font-weight:600;">18 / 20</span></div>
+                <div class="role-row"><span>MFA Pending Setup</span><span style="color:#FFB700;font-weight:600;">2</span></div>
+                <div class="role-row" style="border:none;"><span>Last MFA policy update</span><span style="color:#aaa;font-weight:600;">Apr 28</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IT ACTIVITY LOG -->
+      <div class="page" id="page-it-activitylog">
+        <div class="topbar">
+          <div class="page-title">Activity Log</div>
+          <span style="font-size:11px;color:#555;">All system actions — timestamped and auditable</span>
+        </div>
+        <div class="it-content">
+          <div class="log-toolbar">
+            <input class="log-search" id="logSearch" placeholder="Search by user, action, or description..." />
+            <div class="dropdown" id="logTypeDrop">
+              <div class="it-dd-toggle" id="logTypeToggle">Filter by Type <span class="dd-arrow">▾</span></div>
+              <div class="dd-menu">
+                <div class="dd-item sel" data-val="all">All Types</div>
+                <div class="dd-sep"></div>
+                <div class="dd-item" data-val="login">Login / Auth</div>
+                <div class="dd-item" data-val="chemical">Chemical</div>
+                <div class="dd-item" data-val="user">User Mgmt</div>
+                <div class="dd-item" data-val="security">Security</div>
+                <div class="dd-item" data-val="system">System</div>
+              </div>
+            </div>
+            <div class="dropdown" id="logSevDrop">
+              <div class="it-dd-toggle" id="logSevToggle">Severity <span class="dd-arrow">▾</span></div>
+              <div class="dd-menu">
+                <div class="dd-item sel" data-val="all">All</div>
+                <div class="dd-sep"></div>
+                <div class="dd-item" data-val="info">Info</div>
+                <div class="dd-item" data-val="warn">Warning</div>
+                <div class="dd-item" data-val="crit">Critical</div>
+              </div>
+            </div>
+          </div>
+          <div class="log-table-wrap">
+            <table class="log-table" id="logTable">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Type</th>
+                  <th>Action</th>
+                  <th>Severity</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="logBody">
+                <tr data-type="security" data-sev="crit">
+                  <td style="color:var(--text3);white-space:nowrap;">May 03 · 09:47 AM</td>
+                  <td>lab.user@jnj.com</td>
+                  <td><span class="log-badge lb-security">Security</span></td>
+                  <td>Failed login × 5</td>
+                  <td><span class="sev-dot sev-crit"></span>Critical</td>
+                  <td style="color:var(--text3);">Account auto-locked after threshold exceeded</td>
+                </tr>
+                <tr data-type="chemical" data-sev="warn">
+                  <td style="color:var(--text3);white-space:nowrap;">May 03 · 09:31 AM</td>
+                  <td>j.prats@jnj.com</td>
+                  <td><span class="log-badge lb-chemical">Chemical</span></td>
+                  <td>Rejected entry: Acetone</td>
+                  <td><span class="sev-dot sev-warn"></span>Warning</td>
+                  <td style="color:var(--text3);">Admin rejected pending chemical approval</td>
+                </tr>
+                <tr data-type="login" data-sev="info">
+                  <td style="color:var(--text3);white-space:nowrap;">May 03 · 09:12 AM</td>
+                  <td>it-admin@jnj.com</td>
+                  <td><span class="log-badge lb-login">Login</span></td>
+                  <td>Login successful</td>
+                  <td><span class="sev-dot sev-info"></span>Info</td>
+                  <td style="color:var(--text3);">MFA verified · Chrome · Windows</td>
+                </tr>
+                <tr data-type="user" data-sev="info">
+                  <td style="color:var(--text3);white-space:nowrap;">May 03 · 08:55 AM</td>
+                  <td>j.prats@jnj.com</td>
+                  <td><span class="log-badge lb-user">User Mgmt</span></td>
+                  <td>Added user: p.patel@jnj.com</td>
+                  <td><span class="sev-dot sev-info"></span>Info</td>
+                  <td style="color:var(--text3);">Role assigned: Marketing · Status: Pending</td>
+                </tr>
+                <tr data-type="security" data-sev="warn">
+                  <td style="color:var(--text3);white-space:nowrap;">May 03 · 02:14 AM</td>
+                  <td>m.williams@jnj.com</td>
+                  <td><span class="log-badge lb-security">Security</span></td>
+                  <td>Off-hours login</td>
+                  <td><span class="sev-dot sev-warn"></span>Warning</td>
+                  <td style="color:var(--text3);">Login outside 8AM–6PM window flagged</td>
+                </tr>
+                <tr data-type="chemical" data-sev="info">
+                  <td style="color:var(--text3);white-space:nowrap;">May 02 · 04:30 PM</td>
+                  <td>j.prats@jnj.com</td>
+                  <td><span class="log-badge lb-chemical">Chemical</span></td>
+                  <td>Approved entry: Tylenol</td>
+                  <td><span class="sev-dot sev-info"></span>Info</td>
+                  <td style="color:var(--text3);">Risk: Low · Category: Pain Relief</td>
+                </tr>
+                <tr data-type="system" data-sev="info">
+                  <td style="color:var(--text3);white-space:nowrap;">May 02 · 02:00 AM</td>
+                  <td>system</td>
+                  <td><span class="log-badge lb-system">System</span></td>
+                  <td>Automated backup completed</td>
+                  <td><span class="sev-dot sev-info"></span>Info</td>
+                  <td style="color:var(--text3);">Full DB backup · 2.4 GB · AWS S3</td>
+                </tr>
+                <tr data-type="login" data-sev="warn">
+                  <td style="color:var(--text3);white-space:nowrap;">May 02 · 11:03 AM</td>
+                  <td>p.patel@jnj.com</td>
+                  <td><span class="log-badge lb-login">Login</span></td>
+                  <td>Login: new device</td>
+                  <td><span class="sev-dot sev-warn"></span>Warning</td>
+                  <td style="color:var(--text3);">Unrecognized device fingerprint detected</td>
+                </tr>
+                <tr data-type="user" data-sev="crit">
+                  <td style="color:var(--text3);white-space:nowrap;">May 01 · 03:22 PM</td>
+                  <td>unknown</td>
+                  <td><span class="log-badge lb-security">Security</span></td>
+                  <td>Unauthorized access attempt</td>
+                  <td><span class="sev-dot sev-crit"></span>Critical</td>
+                  <td style="color:var(--text3);">Restricted chemical page · IP flagged</td>
+                </tr>
+                <tr data-type="system" data-sev="info">
+                  <td style="color:var(--text3);white-space:nowrap;">May 01 · 08:00 AM</td>
+                  <td>system</td>
+                  <td><span class="log-badge lb-system">System</span></td>
+                  <td>Session timeout sweep</td>
+                  <td><span class="sev-dot sev-info"></span>Info</td>
+                  <td style="color:var(--text3);">4 inactive sessions cleared (15-min rule)</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="log-empty" id="logEmpty" style="display:none;">No log entries match the selected filters.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IT SECURITY CONTROLS -->
+      <div class="page" id="page-it-security">
+        <div class="topbar">
+          <div class="page-title">Security Controls</div>
+          <span style="font-size:11px;color:#555;">Account lockouts, failed logins, and session policy</span>
+        </div>
+        <div class="it-content">
+          <div class="sec-grid">
+            <div class="sec-stat"><div class="sec-stat-label">Failed Logins (24h)</div><div class="sec-stat-val sv-warn">7</div></div>
+            <div class="sec-stat"><div class="sec-stat-label">Locked Accounts</div><div class="sec-stat-val sv-crit" id="lockedCount">3</div></div>
+            <div class="sec-stat"><div class="sec-stat-label">MFA Compliance</div><div class="sec-stat-val sv-ok">90%</div></div>
+            <div class="sec-stat"><div class="sec-stat-label">Open Security Alerts</div><div class="sec-stat-val sv-red">2</div></div>
+          </div>
+
+          <div class="sec-card">
+            <div class="card-title">Locked Accounts</div>
+            <div id="lockedList">
+              <div class="locked-row" id="lock-1">
+                <div class="lock-av">LU</div>
+                <div style="flex:1;">
+                  <div style="font-size:12px;font-weight:600;">lab.user@jnj.com</div>
+                  <div class="lock-reason">5 failed login attempts · Locked May 03 · 09:47 AM</div>
+                </div>
+                <button class="unlock-btn" onclick="unlockAccount('lock-1')">Unlock</button>
+              </div>
+              <div class="locked-row" id="lock-2">
+                <div class="lock-av">RK</div>
+                <div style="flex:1;">
+                  <div style="font-size:12px;font-weight:600;">r.kumar@jnj.com</div>
+                  <div class="lock-reason">Suspicious off-hours access · Locked May 02 · 03:15 AM</div>
+                </div>
+                <button class="unlock-btn" onclick="unlockAccount('lock-2')">Unlock</button>
+              </div>
+              <div class="locked-row" id="lock-3">
+                <div class="lock-av">GH</div>
+                <div style="flex:1;">
+                  <div style="font-size:12px;font-weight:600;">g.harris@jnj.com</div>
+                  <div class="lock-reason">Unauthorized restricted page access · Locked May 01</div>
+                </div>
+                <button class="unlock-btn" onclick="unlockAccount('lock-3')">Unlock</button>
+              </div>
+              <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px 0;display:none;" id="noLocked">No accounts currently locked</div>
+            </div>
+          </div>
+
+          <div class="sec-card">
+            <div class="card-title">Session &amp; Authentication Policy (FR 17)</div>
+            <div class="sec-setting-row"><span>MFA required for all admin logins</span><span class="sec-setting-val" style="color:#55DD55;">Enabled</span></div>
+            <div class="sec-setting-row"><span>Session timeout (inactivity)</span><span class="sec-setting-val">15 minutes</span></div>
+            <div class="sec-setting-row"><span>Failed login lockout threshold</span><span class="sec-setting-val">5 attempts</span></div>
+            <div class="sec-setting-row"><span>Account lockout duration</span><span class="sec-setting-val">10 minutes</span></div>
+            <div class="sec-setting-row"><span>Audit log retention period</span><span class="sec-setting-val">3 years</span></div>
+            <div class="sec-setting-row"><span>Daily automated DB backup</span><span class="sec-setting-val" style="color:#55DD55;">Active</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IT PLACEHOLDER: System Health -->
+      <div class="page" id="page-it-placeholder">
+        <div class="topbar">
+          <div class="page-title">System Health</div>
+        </div>
+        <div class="content" style="display:flex;align-items:center;justify-content:center;flex:1;">
+          <div style="text-align:center;color:var(--text3);">
+            <div style="font-size:52px;margin-bottom:16px;">🖥️</div>
+            <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;">System Health Coming Soon</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;">Server uptime, backup status, and infrastructure monitoring will live here</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end .main (IT) -->
+  </div><!-- end .app (IT) -->
+  </div><!-- end #role-it -->
+
+</div><!-- end .app-shell -->
+
+<script>
+  // ── Navigation (Admin only — exclude IT nav items) ──
+  var navItems = document.querySelectorAll('#role-admin .nav-item');
+  var pageMap = { dashboard: 'page-dashboard', inventory: 'page-inventory', chatbot: 'page-chatbot', usermgmt: 'page-usermgmt', placeholder: 'page-placeholder' };
+
+  navItems.forEach(function(item) {
+    item.addEventListener('click', function() {
+      navItems.forEach(function(n) { n.classList.remove('active'); });
+      item.classList.add('active');
+      var pageKey = item.dataset.page;
+      Object.values(pageMap).forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.remove('active'); });
+      var target = document.getElementById(pageMap[pageKey]);
+      if (target) target.classList.add('active');
+      if (pageKey === 'placeholder') {
+        document.getElementById('placeholderTitle').textContent = item.textContent;
+        document.getElementById('placeholderEmoji').textContent = item.dataset.emoji || '⚙️';
+        document.getElementById('placeholderName').textContent = item.dataset.msg || item.textContent + ' Coming Soon';
+        document.getElementById('placeholderSub').textContent = item.dataset.sub || 'This tab is under construction';
+      }
+      if (pageKey === 'chatbot') { var ca = document.getElementById('chatArea'); ca.scrollTop = ca.scrollHeight; }
+    });
+  });
+
+  // ── Approval slide-out ──
+  document.querySelectorAll('.ap-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var row = btn.closest('.ap-row');
+      row.classList.add('dismissing');
+      setTimeout(function() {
+        row.classList.add('dismissed');
+        var card = row.closest('.card');
+        var remaining = card.querySelectorAll('.ap-row:not(.dismissed)');
+        if (remaining.length === 0) { var e = card.querySelector('.ap-empty'); if (e) e.style.display = 'block'; }
+        var stat = document.getElementById('pendingStat');
+        var cur = parseInt(stat.textContent); if (cur > 0) stat.textContent = cur - 1;
+      }, 400);
+    });
+  });
+
+  // ── Inventory filters ──
+  var activeRisk = 'all', activeCat = 'all';
+  function setupDrop(dropId, toggleId, onPick) {
+    var drop = document.getElementById(dropId), tog = document.getElementById(toggleId);
+    tog.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.dropdown.open').forEach(function(d) { if (d !== drop) d.classList.remove('open'); });
+      drop.classList.toggle('open');
+    });
+    drop.querySelectorAll('.dd-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        drop.querySelectorAll('.dd-item').forEach(function(i) { i.classList.remove('sel'); });
+        item.classList.add('sel'); drop.classList.remove('open');
+        onPick(item.dataset.val, item.dataset.label, tog);
+      });
+    });
+  }
+  setupDrop('riskDrop', 'riskToggle', function(val, label, tog) {
+    activeRisk = val;
+    tog.innerHTML = (val === 'all' ? 'Filter by Risk' : label) + ' <span class="dd-arrow">▾</span>';
+    tog.classList.toggle('filtered', val !== 'all');
+    applyFilters(); renderPills();
+  });
+  setupDrop('catDrop', 'catToggle', function(val, label, tog) {
+    activeCat = val;
+    tog.innerHTML = (val === 'all' ? 'Filter by Category' : label) + ' <span class="dd-arrow">▾</span>';
+    tog.classList.toggle('filtered', val !== 'all');
+    applyFilters(); renderPills();
+  });
+  document.addEventListener('click', function() { document.querySelectorAll('.dropdown.open').forEach(function(d) { d.classList.remove('open'); }); });
+  document.getElementById('searchInput').addEventListener('input', applyFilters);
+  function applyFilters() {
+    var q = document.getElementById('searchInput').value.toLowerCase(), vis = 0;
+    document.querySelectorAll('.ccard').forEach(function(c) {
+      var show = (activeRisk === 'all' || c.dataset.risk === activeRisk) && (activeCat === 'all' || c.dataset.cat === activeCat) && (!q || c.textContent.toLowerCase().includes(q));
+      c.style.display = show ? '' : 'none'; if (show) vis++;
+    });
+    document.getElementById('noResults').style.display = vis === 0 ? 'block' : 'none';
+  }
+  function renderPills() {
+    var pc = document.getElementById('pills'); pc.innerHTML = '';
+    if (activeRisk !== 'all') { var ri = document.querySelector('#riskDrop .dd-item[data-val="' + activeRisk + '"]'); makePill(pc, ri ? ri.dataset.label : activeRisk, function() { clearDrop('riskDrop','riskToggle','Filter by Risk'); activeRisk='all'; applyFilters(); renderPills(); }); }
+    if (activeCat !== 'all')  { var ci = document.querySelector('#catDrop .dd-item[data-val="' + activeCat + '"]');  makePill(pc, ci ? ci.dataset.label : activeCat,   function() { clearDrop('catDrop','catToggle','Filter by Category'); activeCat='all'; applyFilters(); renderPills(); }); }
+  }
+  function makePill(container, label, onX) {
+    var p = document.createElement('div'); p.className = 'pill';
+    p.innerHTML = label + ' <span class="pill-x">×</span>';
+    p.querySelector('.pill-x').addEventListener('click', onX); container.appendChild(p);
+  }
+  function clearDrop(dropId, toggleId, defaultLabel) {
+    var tog = document.getElementById(toggleId);
+    tog.innerHTML = defaultLabel + ' <span class="dd-arrow">▾</span>'; tog.classList.remove('filtered');
+    document.querySelectorAll('#' + dropId + ' .dd-item').forEach(function(i) { i.classList.remove('sel'); });
+    document.querySelector('#' + dropId + ' .dd-item[data-val="all"]').classList.add('sel');
+  }
+
+  // ── Chatbot ──
+  var chatArea = document.getElementById('chatArea');
+  var chatInput = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('sendBtn');
+  var botReplies = [
+    'Understood. Checking the system logs now and flagging any anomalies for your review.',
+    'That request has been processed. All relevant records have been updated in the compliance database.',
+    'I\'ve reviewed the current inventory data. <strong>3 items</strong> require immediate attention based on your criteria.',
+    'Generating the compliance report now. This will include all activity from the past 30 days.',
+    'Risk classification has been updated. All affected users have been notified of the permission change.',
+    'I found <strong>2 unusual order patterns</strong> in the last 7 days exceeding normal quantity thresholds. Would you like to flag these for approval?',
+    'AI recommendation filters have been updated. Restricted chemicals will no longer surface for consumer-role accounts.'
+  ];
+  var replyIdx = 0;
+  function scrollChat() { chatArea.scrollTop = chatArea.scrollHeight; }
+  function addMsg(html, isUser) {
+    var msg = document.createElement('div'); msg.className = 'msg' + (isUser ? ' user' : '');
+    var av = isUser ? 'JP' : 'AI', avClass = isUser ? 'usr-av' : 'bot-av';
+    msg.innerHTML = (isUser ? '' : '<div class="msg-av ' + avClass + '">' + av + '</div>') +
+      '<div class="bubble ' + (isUser ? 'usr-b' : 'bot-b') + '">' + html + '</div>' +
+      (isUser ? '<div class="msg-av ' + avClass + '">' + av + '</div>' : '');
+    chatArea.appendChild(msg); scrollChat();
+  }
+  function showTyping() {
+    var m = document.createElement('div'); m.className = 'msg'; m.id = 'typingMsg';
+    m.innerHTML = '<div class="msg-av bot-av">AI</div><div class="typing-bubble"><span></span><span></span><span></span></div>';
+    chatArea.appendChild(m); scrollChat();
+  }
+  function removeTyping() { var t = document.getElementById('typingMsg'); if (t) t.remove(); }
+  function sendMessage(text) {
+    text = text.trim(); if (!text) return;
+    chatInput.value = ''; sendBtn.disabled = true;
+    addMsg(text, true); showTyping();
+    setTimeout(function() {
+      removeTyping();
+      addMsg(botReplies[replyIdx % botReplies.length], false);
+      replyIdx++; sendBtn.disabled = false; chatInput.focus();
+    }, 1000 + Math.random() * 700);
+  }
+  sendBtn.addEventListener('click', function() { sendMessage(chatInput.value); });
+  chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(chatInput.value); });
+  document.querySelectorAll('.chip').forEach(function(chip) { chip.addEventListener('click', function() { sendMessage(chip.textContent); }); });
+  // ── User Management ──
+  function switchUmTab(tab) {
+    document.getElementById('umRolesPane').style.display = tab === 'roles' ? 'block' : 'none';
+    document.getElementById('umUsersPane').style.display = tab === 'users'  ? 'block' : 'none';
+    document.getElementById('tabRoles').classList.toggle('active', tab === 'roles');
+    document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
+  }
+
+  function toggleRole(id) {
+    var block = document.getElementById('rb-' + id);
+    var body  = document.getElementById('rbb-' + id);
+    var isOpen = block.classList.contains('open');
+    block.classList.toggle('open', !isOpen);
+    body.style.display = isOpen ? 'none' : 'block';
+  }
+
+  document.querySelectorAll('.toggle').forEach(function(tog) {
+    tog.addEventListener('click', function() {
+      tog.classList.toggle('on');
+      tog.classList.toggle('off');
+    });
+  });
+
+  document.getElementById('umSearch').addEventListener('input', function() {
+    var q = this.value.toLowerCase();
+    document.querySelectorAll('#umTableBody tr').forEach(function(row) {
+      row.style.display = (!q || row.dataset.name.includes(q) || row.dataset.role.includes(q)) ? '' : 'none';
+    });
+  });
+
+  document.querySelectorAll('.um-remove').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var row = btn.closest('tr');
+      row.style.transition = 'opacity 0.35s ease';
+      row.style.opacity = '0';
+      setTimeout(function() { row.remove(); }, 380);
+    });
+  });
+
+  var umModal = document.getElementById('umModal');
+  document.getElementById('umAddBtn').addEventListener('click', function() { umModal.style.display = 'flex'; });
+  document.getElementById('umModalCancel').addEventListener('click', function() { umModal.style.display = 'none'; });
+  umModal.addEventListener('click', function(e) { if (e.target === umModal) umModal.style.display = 'none'; });
+
+  var avColorsMap = { admin:'', laboratory:'background:rgba(68,153,255,0.15);color:#66AAFF', compliance:'background:rgba(200,140,0,0.15);color:#FFB700', marketing:'background:rgba(130,0,210,0.15);color:#CC88FF', user:'background:rgba(90,90,90,0.25);color:#aaa' };
+  var roleClassMap = { admin:'ur-admin', laboratory:'ur-lab', compliance:'ur-comp', marketing:'ur-mktg', user:'ur-user' };
+
+  document.getElementById('umModalSave').addEventListener('click', function() {
+    var name = document.getElementById('umNewName').value.trim();
+    var email = document.getElementById('umNewEmail').value.trim();
+    var dept = document.getElementById('umNewDept').value.trim();
+    var role = document.getElementById('umNewRole').value;
+    if (!name) return;
+    var initials = name.split(' ').map(function(w){ return w[0]; }).join('').toUpperCase().slice(0,2);
+    var roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+    var avStyle = avColorsMap[role] || '';
+    var roleClass = roleClassMap[role] || 'ur-user';
+    var tr = document.createElement('tr');
+    tr.dataset.name = name.toLowerCase(); tr.dataset.role = role;
+    tr.style.opacity = '0'; tr.style.transition = 'opacity 0.3s ease';
+    tr.innerHTML = '<td><div class="um-name-cell"><div class="um-avatar" style="' + avStyle + '">' + initials + '</div><div><div class="um-name">' + name + '</div><div class="um-email">' + (email||'—') + '</div></div></div></td>' +
+      '<td><span class="um-role-badge ' + roleClass + '">' + roleLabel + '</span></td>' +
+      '<td>' + (dept||'—') + '</td><td><span class="status-dot s-pending"></span>Pending</td>' +
+      '<td><button class="um-action-btn um-remove">Remove</button></td>';
+    document.getElementById('umTableBody').appendChild(tr);
+    setTimeout(function() { tr.style.opacity = '1'; }, 20);
+    tr.querySelector('.um-remove').addEventListener('click', function() {
+      tr.style.transition = 'opacity 0.35s ease'; tr.style.opacity = '0';
+      setTimeout(function() { tr.remove(); }, 380);
+    });
+    ['umNewName','umNewEmail','umNewDept'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('umNewRole').value = 'user';
+    umModal.style.display = 'none';
+  });
+
+  // ── Manage Chemicals navigates to inventory ──
+  document.querySelectorAll('.qbtn').forEach(function(btn) {
+    if (btn.textContent.trim() === 'Manage Chemicals') {
+      btn.addEventListener('click', function() {
+        navItems.forEach(function(n) { n.classList.remove('active'); });
+        document.querySelector('.nav-item[data-page="inventory"]').classList.add('active');
+        Object.values(pageMap).forEach(function(id) { document.getElementById(id).classList.remove('active'); });
+        document.getElementById('page-inventory').classList.add('active');
+      });
+    }
+  });
+
+  // ── Live ticking timestamps ──
+  var alertTimes = [0, 2, 14];
+  function updateTimestamps() {
+    var subs = document.querySelectorAll('.alert-sub');
+    var labels = [
+      function(m) { return m === 0 ? 'Formaldehyde flagged · just now' : 'Formaldehyde flagged · ' + m + ' min ago'; },
+      function(m) { return 'Unusual bulk order · ' + m + ' min ago'; },
+      function(m) { return 'User ADM-302 · ' + m + ' min ago'; }
+    ];
+    subs.forEach(function(sub, i) {
+      if (labels[i]) sub.textContent = labels[i](alertTimes[i]);
+    });
+  }
+  setInterval(function() {
+    alertTimes = alertTimes.map(function(t) { return t + 1; });
+    updateTimestamps();
+  }, 60000);
+
+  // ── Reject confirmation modal ──
+  var modal = document.createElement('div');
+  modal.id = 'rejectModal';
+  modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;';
+  modal.innerHTML = '<div style="background:#222;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:28px 32px;width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">' +
+    '<div style="font-size:28px;margin-bottom:12px;">⚠️</div>' +
+    '<div style="font-size:15px;font-weight:600;margin-bottom:6px;">Reject Chemical?</div>' +
+    '<div style="font-size:12px;color:#999;margin-bottom:24px;" id="rejectChemName">This action cannot be undone.</div>' +
+    '<div style="display:flex;gap:10px;justify-content:center;">' +
+    '<button id="rejectCancel" style="flex:1;background:#2a2a2a;border:1px solid rgba(255,255,255,0.1);color:#aaa;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Cancel</button>' +
+    '<button id="rejectConfirm" style="flex:1;background:rgba(204,0,0,0.85);border:none;color:#fff;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Yes, Reject</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+
+  var pendingRejectRow = null;
+  document.querySelectorAll('.ap-no').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      pendingRejectRow = btn.closest('.ap-row');
+      var name = pendingRejectRow.querySelector('span').textContent;
+      document.getElementById('rejectChemName').textContent = 'Reject "' + name + '"? This action cannot be undone.';
+      modal.style.display = 'flex';
+    });
+  });
+  document.getElementById('rejectCancel').addEventListener('click', function() {
+    modal.style.display = 'none'; pendingRejectRow = null;
+  });
+  document.getElementById('rejectConfirm').addEventListener('click', function() {
+    modal.style.display = 'none';
+    if (pendingRejectRow) {
+      pendingRejectRow.classList.add('dismissing');
+      setTimeout(function() {
+        pendingRejectRow.classList.add('dismissed');
+        var card = pendingRejectRow.closest('.card');
+        var remaining = card.querySelectorAll('.ap-row:not(.dismissed)');
+        if (remaining.length === 0) { var e = card.querySelector('.ap-empty'); if (e) e.style.display = 'block'; }
+        var stat = document.getElementById('pendingStat');
+        var cur = parseInt(stat.textContent); if (cur > 0) stat.textContent = cur - 1;
+        pendingRejectRow = null;
+      }, 400);
+    }
+  });
+  modal.addEventListener('click', function(e) { if (e.target === modal) { modal.style.display = 'none'; pendingRejectRow = null; } });
+
+  // ── Inventory delete ──
+  document.querySelectorAll('.abt-del').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var card = btn.closest('.ccard');
+      card.classList.add('dissolving');
+      setTimeout(function() { card.style.display = 'none'; }, 420);
+    });
+  });
+
+  // ── TOP TAB SWITCHER ──
+  document.querySelectorAll('.top-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.top-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      var role = tab.dataset.role;
+      document.querySelectorAll('.role-view').forEach(function(v) { v.classList.remove('active'); });
+      document.getElementById('role-' + role).classList.add('active');
+    });
+  });
+
+  // ── IT NAV ──
+  var itPageMap = {
+    'it-dashboard':   'page-it-dashboard',
+    'it-activitylog': 'page-it-activitylog',
+    'it-security':    'page-it-security',
+    'it-placeholder': 'page-it-placeholder'
+  };
+
+  function switchITPage(key) {
+    document.querySelectorAll('.it-nav-item').forEach(function(n) { n.classList.remove('active'); });
+    var navEl = document.querySelector('.it-nav-item[data-itpage="' + key + '"]');
+    if (navEl) navEl.classList.add('active');
+    Object.values(itPageMap).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    });
+    var target = document.getElementById(itPageMap[key]);
+    if (target) target.classList.add('active');
+  }
+
+  document.querySelectorAll('.it-nav-item').forEach(function(item) {
+    item.addEventListener('click', function() { switchITPage(item.dataset.itpage); });
+  });
+
+  // ── ACTIVITY LOG filters ──
+  var activeLogType = 'all', activeLogSev = 'all';
+
+  function setupITDrop(dropId, toggleId, onPick) {
+    var drop = document.getElementById(dropId);
+    var tog  = document.getElementById(toggleId);
+    if (!drop || !tog) return;
+    tog.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.dropdown.open').forEach(function(d) { if (d !== drop) d.classList.remove('open'); });
+      drop.classList.toggle('open');
+    });
+    drop.querySelectorAll('.dd-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        drop.querySelectorAll('.dd-item').forEach(function(i) { i.classList.remove('sel'); });
+        item.classList.add('sel');
+        drop.classList.remove('open');
+        onPick(item.dataset.val, item.textContent.trim(), tog);
+      });
+    });
+  }
+
+  setupITDrop('logTypeDrop', 'logTypeToggle', function(val, label, tog) {
+    activeLogType = val;
+    tog.innerHTML = (val === 'all' ? 'Filter by Type' : label) + ' <span class="dd-arrow">▾</span>';
+    tog.classList.toggle('filtered', val !== 'all');
+    applyLogFilters();
+  });
+
+  setupITDrop('logSevDrop', 'logSevToggle', function(val, label, tog) {
+    activeLogSev = val;
+    tog.innerHTML = (val === 'all' ? 'Severity' : label) + ' <span class="dd-arrow">▾</span>';
+    tog.classList.toggle('filtered', val !== 'all');
+    applyLogFilters();
+  });
+
+  var logSearch = document.getElementById('logSearch');
+  if (logSearch) {
+    logSearch.addEventListener('input', applyLogFilters);
+  }
+
+  function applyLogFilters() {
+    var query = (logSearch ? logSearch.value.toLowerCase() : '');
+    var rows = document.querySelectorAll('#logBody tr');
+    var visible = 0;
+    rows.forEach(function(row) {
+      var typeMatch = activeLogType === 'all' || row.dataset.type === activeLogType;
+      var sevMatch  = activeLogSev  === 'all' || row.dataset.sev  === activeLogSev;
+      var text = row.textContent.toLowerCase();
+      var textMatch = !query || text.includes(query);
+      var show = typeMatch && sevMatch && textMatch;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    var empty = document.getElementById('logEmpty');
+    if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  // ── UNLOCK accounts ──
+  function unlockAccount(id) {
+    var row = document.getElementById(id);
+    if (!row) return;
+    row.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(40px)';
+    setTimeout(function() {
+      row.remove();
+      var count = document.getElementById('lockedCount');
+      var cur = parseInt(count.textContent);
+      if (cur > 0) count.textContent = cur - 1;
+      var remaining = document.querySelectorAll('#lockedList .locked-row');
+      if (remaining.length === 0) {
+        document.getElementById('noLocked').style.display = 'block';
+      }
+    }, 380);
+  }</script>
+</body>
+</html>
