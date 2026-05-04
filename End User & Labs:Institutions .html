@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+  <meta charset = "UTF-8" />
+  <meta name = "viewport" content = "width = device-width, initial-scale = 1.0" />
+  <title> J&J Waste Management - Dark</title>
+  <link href = "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel = "stylesheet" />
+  <script src = "https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    
+  :root {
+    --red: #CC0000;
+    --red-light: #2A1010; /* Idk Red maybe*/
+    --red-dark: #990000;
+    --sidebar-w: 190px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+
+    --bg-primary: #1E1E1C;
+    --bg-secondary: #252523; 
+    --bg-tertiary: #141412;  
+    --text-primary: #F0EEE8; 
+    --text-secondary: #A8A69E;
+    --text-tertiary: #6A6864;
+    --border-light: rgba(255,255,255,0.08);
+    --border-med: rgba(255,255,255,0.14);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { 
+    font-family: var(--font); 
+    background: var(--bg-tertiary); 
+    color: var(--text-primary);
+    display: flex; 
+    height: 100vh; 
+    overflow: hidden; 
+  }
+    
+  .sidebar { 
+    width: var(--sidebar-w); 
+    background: var(--bg-primary); 
+    border-right: 1px solid var(--border-light); 
+    display: flex; 
+    flex-direction: column; 
+    flex-shrink: 0; 
+  }
+    
+  .sidebar-brand { padding: 24px 16px; border-bottom: 1px solid var(--border-light); }
+  .logo-img { width: 130px; height: auto; margin-bottom: 8px; display: block; filter: brightness(1.2); }
+  .brand-title { font-size: 17px; font-weight: 600; color: var(--red); letter-spacing: 0.5px; text-transform: uppercase; }
+
+  .nav-items { flex: 1; padding: 10px 0; }
+  .nav-item { 
+    padding: 12px 16px; 
+    color: var(--text-secondary); 
+    cursor: pointer; 
+    font-size: 13px; 
+    transition: 0.2s; 
+  }
+  .nav-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .nav-item.active { color: var(--text-primary); font-weight: 600; background: var(--red-light); border-left: 3px solid var(--red); }
+
+  .logoutButton {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: var(--font);
+      background: transparent;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      transition: background 0.12s;
+    }
+    .logoutButton:hover { background: var(--bg-secondary); }
+    .filterButton {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: var(--font);
+      background: var(--red);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: #fff;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .filter-label {
+      font-size: 10px;
+      color: var(--red);
+      font-weight: 600;
+      margin-bottom: 3px;
+      margin-top: 8px;
+    }
+    .filter-select {
+      width: 100%;
+      padding: 5px 7px;
+      font-size: 11px;
+      font-family: var(--font);
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+    }
+    .applyButton{
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-family: var(--font);
+      background: transparent;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      transition: background 0.12s;
+    }
+    .applyButton:hover { background: var(--bg-secondary); }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+  .topbar {
+      padding: 12px 22px;
+      border-bottom: 0.5px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-primary);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .page-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+
+  .role-tabs {
+    display: flex;
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .role-tab {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-family: var(--font);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: background 0.12s, color 0.12s;
+  }
+
+  /* Vertical divider between buttons */
+  .role-tab:not(:last-child) { 
+    border-right: 0.5px solid var(--border-light); 
+  }
+
+  .role-tab.active { 
+    background: var(--red); 
+    color: #fff; 
+    font-weight: 500; 
+  }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border: 0.5px solid var(--border-light);
+    border-radius: 20px;
+    font-size: 11px;
+  }
+
+  .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--red-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--red);
+  }
+
+  /* Filter */
+  .filter-section { 
+    display: flex; 
+    gap: 32px; 
+    background: var(--bg-primary); 
+    padding: 16px 24px; 
+    border-bottom: 1px solid var(--border-light);
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-group label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; }
+  select { 
+    padding: 6px 10px; 
+    border-radius: var(--radius-md); 
+    border: 1px solid var(--border-med); 
+    background: var(--bg-secondary);
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+  }
+
+  .content-grid { 
+    display: grid; 
+    grid-template-columns: 2fr 1fr; 
+    gap: 20px; 
+    padding: 24px; 
+  }
+
+  #mainContent {
+    display: none;
+    width: 100%;
+    padding: 24px;
+  }
+
+  .customer-top-panel {
+    display: grid;
+    grid-template-columns: 1.1fr 0.95fr;
+    gap: 20px;
+    padding: 24px;
+  }
+  .customer-left-column,
+  .customer-right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .info-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    min-height: 88px;
+  }
+  .customer-product-image,
+  .hazard-label-image {
+    width: 600px;
+    height: 300px;
+    min-height: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .customer-product-image img,
+  .hazard-label-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+  }
+  .placeholder-text {
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-align: center;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .card-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .card-content {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .reportButton-container {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .reportButton {
+    background: var(--red);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #fff;
+    padding: 10px 18px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+    
+  .chart-card { 
+    background: var(--bg-primary); 
+    padding: 24px; 
+    border-radius: var(--radius-lg); 
+    border: 1px solid var(--border-light); 
+    height: 360px; 
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-header { font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 16px; }
+  .chart-container { flex: 1; position: relative; width: 100%; }
+
+  .stats-column { display: flex; flex-direction: column; gap: 16px; }
+  .stat-box { 
+    background: var(--bg-primary); 
+    padding: 20px; 
+    border-radius: var(--radius-lg); 
+    border: 1px solid var(--border-light); 
+  }
+  .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; }
+  .stat-value { 
+    font-size: 22px; 
+    font-weight: 600; 
+    color: var(--red); 
+    margin-top: 4px; 
+    font-family: var(--mono); 
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+
+  .modal-content {
+    background-color: var(--bg-primary);
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    width: 300px;
+    text-align: center;
+    color: var(--text-primary);
+  }
+
+  .modal-content p {
+    margin-bottom: 20px;
+    font-size: 18px;
+  }
+
+  .modal-content button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 14px;
+  }
+
+  #confirmLogout {
+    background-color: var(--red);
+    color: #fff;
+  }
+
+  #cancelLogout {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <img src="Johnson & Johnson Logo.png" alt="Logo" class="logo-img">
+      <div class="brand-title">MarketFlow</div>
+    </div>
+    <div class="nav-items" id = "navItems">
+      <div class="nav-item active">Home</div>
+      <div class="nav-item">Analytics</div>
+      <div class="nav-item">Reports</div>
+      <div class="nav-item">Inquiries</div>
+    </div>
+
+    <div id="sidebarBottom" style="padding: 16px;"></div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="page-title">Overview</div>
+        <div class="role-tabs">
+          <button class="role-tab active" onclick="switchRole('waste', this)">Waste Manager</button>
+          <button class="role-tab" onclick="switchRole('customer', this)">Customer</button>
+          <button class="role-tab" onclick="switchRole('researcher', this)">Lab Researcher</button>
+        </div>
+      </div>
+      <div class="user-badge">
+        <div class="avatar" id="avatarEl">MA</div>
+        <span id="roleLabel">Role: Waste Manager</span>
+      </div>
+    </div>
+
+    <div id="wasteManagerView">
+    <div class="filter-section">
+        <div class="filter-group">
+            <label>Timeline</label>
+            <select id="timelineSelect" onchange="updateDashboard()">
+                <option value="weekly">Weekly View</option>
+                <option value="monthly">Monthly View</option>
+                <option value="yearly">Yearly View</option>
+            </select>
+        </div>
+      <div class="filter-group">
+        <label>Category</label>
+        <select>
+          <option>All Materials</option>
+          <option>Equipment</option>
+          <option>Chemical</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="chart-card">
+        <div class="chart-header">Waste Collection Trend (kg)</div>
+        <div class="chart-container">
+          <canvas id="wasteChart"></canvas>
+        </div>
+      </div>
+
+      <div class="stats-column">
+        <div class="stat-box">
+            <div class="stat-label">Products Restocked</div>
+            <div class="stat-value" id="stat-restocked">1,402</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Total Waste Collected</div>
+            <div class="stat-value" id="stat-waste">12,840 kg</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Warehouses</div>
+            <div class="stat-value" id="stat-warehouses">08</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mainContent">
+  </div>
+
+  <div id="logoutModal" class="modal">
+    <div class="modal-content">
+      <p>Log out?</p>
+      <button id="confirmLogout">Yes</button>
+      <button id="cancelLogout">No</button>
+    </div>
+  </div>
+
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <p>Product Page</p>
+      <button id="closeProductModal">OK</button>
+    </div>
+  </div>
+
+    <script>
+        const ctx = document.getElementById('wasteChart').getContext('2d');
+        let currentRole = 'waste';
+        let currentNav = 'Home';
+        let charts = {};
+
+        const chemicals = [
+          { name: 'Hydrochloric Acid', cas: '7647-01-0', classification: 'Hazardous Material', stock: 324, price: '$25.99' },
+          { name: 'Sulfuric Acid', cas: '7664-93-9', classification: 'Hazardous Material', stock: 67, price: '$32.40' },
+          { name: 'Nitric Acid', cas: '7697-37-2', classification: 'Hazardous Material', stock: 45, price: '$28.50' },
+          { name: 'Phosphoric Acid', cas: '7664-38-2', classification: 'Hazardous Material', stock: 89, price: '$22.75' },
+          { name: 'Sodium Hydroxide', cas: '1310-73-2', classification: 'Corrosive', stock: 156, price: '$18.50' },
+          { name: 'Potassium Hydroxide', cas: '1310-58-3', classification: 'Corrosive', stock: 78, price: '$20.30' },
+          { name: 'Acetic Acid', cas: '64-19-7', classification: 'Flammable', stock: 89, price: '$12.75' },
+          { name: 'Ethanol', cas: '64-17-5', classification: 'Flammable', stock: 245, price: '$15.20' },
+          { name: 'Acetone', cas: '67-64-1', classification: 'Flammable', stock: 178, price: '$11.95' },
+          { name: 'Toluene', cas: '108-88-3', classification: 'Flammable', stock: 92, price: '$16.30' },
+          { name: 'Benzene', cas: '71-43-2', classification: 'Flammable', stock: 134, price: '$19.80' },
+          { name: 'Hexane', cas: '110-54-3', classification: 'Flammable', stock: 67, price: '$14.25' },
+          { name: 'Methanol', cas: '67-56-1', classification: 'Toxic', stock: 134, price: '$14.80' },
+          { name: 'Formaldehyde', cas: '50-00-0', classification: 'Toxic', stock: 56, price: '$17.90' },
+          { name: 'Sodium Cyanide', cas: '143-33-9', classification: 'Toxic', stock: 23, price: '$45.00' }
+        ];
+
+        const roleConfig = {
+          waste: {
+            label: 'Role: Waste Manager',
+            avatar: 'WM',
+            nav: ['Home', 'Waste Analytics', 'Waste Reports', 'Inquiries'],
+            active: 'Home',
+            filters: false
+          },
+          customer: {
+            label: 'Role: Customer',
+            avatar: 'C',
+            nav: ['Home', 'Products', 'AI Chatbot'],
+            active: 'Home',
+            filters: true
+          },
+          researcher: {
+            label: 'Role: Lab Researcher',
+            avatar: 'LR',
+            nav: ['Home', 'Products', 'Safety Reports', 'Warehouses'],
+            active: 'Safety Reports',
+            filters: false
+          }
+        };
+
+        function canvasEl(id) {
+          return `<canvas id="${id}"></canvas>`;
+        }
+
+        function switchRole(role, btn) {
+          document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+
+          currentRole = role;
+          currentNav = roleConfig[role].active;
+          
+          const config = roleConfig[role];
+          document.getElementById('roleLabel').textContent = config.label;
+          document.getElementById('avatarEl').textContent = config.avatar;
+
+          const wasteView = document.getElementById('wasteManagerView');
+          const mainContent = document.getElementById('mainContent');
+          renderSidebar();
+
+          if (currentRole === 'waste') {
+            wasteView.style.display = 'block';
+            mainContent.style.display = 'none';
+            mainContent.innerHTML = '';
+          } else {
+            wasteView.style.display = 'none';
+            mainContent.style.display = 'block';
+            renderContent();
+          }
+        }
+
+        function renderSidebar() {
+          const r = roleConfig[currentRole];
+
+          // Navigation
+          const nav = document.getElementById('navItems');
+          nav.innerHTML = '';
+          r.nav.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'nav-item' + (item === currentNav ? ' active' : '');
+            el.textContent = item;
+            el.onclick = () => {
+              document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+              el.classList.add('active');
+              currentNav = item;
+              renderContent();
+            };
+            nav.appendChild(el);
+          });
+
+          // Bottom
+          const bottom = document.getElementById('sidebarBottom');
+          bottom.innerHTML = '';
+
+          const logout = document.createElement('button');
+          logout.className = 'logoutButton';
+          logout.textContent = 'Logout';
+          logout.onclick = () => {
+            document.getElementById('logoutModal').style.display = 'block';
+          };
+          bottom.appendChild(logout);
+
+          if (r.filters) {
+            const fbtn = document.createElement('button');
+            fbtn.className = 'filterButton';
+            fbtn.textContent = 'Filter Panel';
+            bottom.appendChild(fbtn);
+
+            const filterDefs = [
+              { label: 'Product Classification', id: 'filterProduct', opts: ['All', 'Hazardous Material', 'Corrosive', 'Flammable', 'Toxic']},
+              { label: 'Date Range', id: 'filterDate', opts: ['All Time', 'Weekly', 'Monthly', 'Yearly']},
+              { label: 'Region', id: 'filterRegion', opts: ['All Regions', 'North America', 'Europe']},
+              { label: 'Customer Demographic', id: 'filterDemo', opts: ['All', 'Retail Buyers', 'Labratories', 'Consumers']}
+            ];
+
+            filterDefs.forEach(f => {
+              const lbl = document.createElement('div');
+              lbl.className = 'filter-label';
+              lbl.textContent = f.label;
+              bottom.appendChild(lbl);
+
+              const sel = document.createElement('select');
+              sel.className = 'filter-select';
+              sel.id = f.id;
+              f.opts.forEach(o => {
+                const opt = document.createElement('option');
+                opt.textContent = o;
+                sel.appendChild(opt);
+              });
+              bottom.appendChild(sel);
+            });
+
+            const apply = document.createElement('button');
+            apply.className = 'applyButton';
+            apply.textContent = 'Apply Filter';
+            apply.onclick = () => {
+              if (currentRole === 'customer' && currentNav === 'Home') {
+                filterChemicals();
+              }
+            };
+            bottom.appendChild(apply);
+          }
+        }
+
+        /* Content Rendering */
+        function renderContent() {
+          const el = document.getElementById('mainContent');
+          el.style.display = 'block';
+
+          if (currentRole === 'waste') el.innerHTML = wasteHTML();
+          else if (currentRole === 'customer') {
+            if (currentNav === 'Home') {
+              el.innerHTML = customerHomeHTML();
+
+            }
+            else if (currentNav === 'Products') el.innerHTML = customerHTML();
+            else el.innerHTML = '<div class="info-card" style="padding: 24px;"><p>AI Chatbot content here.</p></div>';
+          }
+          else el.innerHTML = researcherHTML();
+        }
+
+          /* Customer Home Search Page */
+          function customerHomeHTML() {
+            return `
+              <div style="padding: 24px;">
+                <div style="margin-bottom: 20px;">
+                  <h2 style="margin-bottom: 16px; color: var(--text-primary);">Chemical Search</h2>
+                  <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="text" id="searchInput" placeholder="Search chemicals..." style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-med); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary);" onkeyup="filterChemicals()">
+                    <select id="classFilter" onchange="filterChemicals()" style="padding: 8px 12px; border: 1px solid var(--border-med); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary);">
+                      <option value="">All Classifications</option>
+                      <option value="Hazardous Material">Hazardous Material</option>
+                      <option value="Corrosive">Corrosive</option>
+                      <option value="Flammable">Flammable</option>
+                      <option value="Toxic">Toxic</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="info-card" style="padding: 0;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="background: var(--bg-secondary);">
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-med);">Name</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-med);">CAS Number</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-med);">Classification</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-med);">Stock</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-med);">Price</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-med);">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="chemicalTableBody">
+                      ${chemicals.map(chem => `
+                        <tr>
+                          <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.name}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.cas}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.classification}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.stock}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.price}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid var(--border-light);"><button class="reportButton" onclick="viewProduct('${chem.name}')">View</button></td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          }
+
+          /* Customer Page */
+          function customerHTML() {
+            return `
+              <div class="customer-top-panel">
+                <div class="customer-left-column">
+                  <div class="info-card customer-product-image">
+                    <img src="HCl.jpg" alt="HCl Product Image" />
+                  </div>
+                  <div class="info-card customer-name">
+                    <div class="card-title">Name</div>
+                    <div class="card-value">Hydrochloric Acid</div>
+                  </div>
+                  <div class="info-card customer-chemical-info">
+                    <div class="card-title">Chemical Information</div>
+                    <div class="card-content">CAS Number: 7647-01-0<br />Formulation: Solution<br />Classification: Hazardous Material<br />Storage: Room temperature</div>
+                  </div>
+                </div>
+                <div class="customer-right-column">
+                  <div class="info-card hazard-label-image">
+                    <img src="Hazard Label.jpg" alt="Hazard Label Image" />
+                  </div>
+                  <div class="info-card hazard-handling">
+                    <div class="card-title">Hazard Handling</div>
+                    <div class="card-content">Wear gloves, eye protection, and follow containment procedures. Use in well-ventilated areas and keep away from incompatible materials.</div>
+                  </div>
+                  <div class="info-card stock-count">
+                    <div class="card-title">Products In Stock</div>
+                    <div class="card-value">324</div>
+                  </div>
+                  <div class="reportButton-container">
+                    <button class="reportButton">Report</button>
+                  </div>
+                </div>
+              </div>
+
+              </div>`;
+          }
+
+          /* Researcher Page */
+          function researcherHTML() {
+            return `
+              <div class="info-card" style="padding: 24px;">
+                <div class="section-label">Safety Log</div>
+                <div class="table-section" style="margin-bottom:20px">
+                  <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                    <thead>
+                      <tr>
+                        <th style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Chemical</th>
+                        <th style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Update</th>
+                        <th style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Date</th>
+                        <th style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Product Page</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">NCI-4482</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Safety protocol updated for handling high-risk compounds</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-10-01</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">ONC-7731</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">New storage guidelines implemented</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-10-05</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">INF-1105</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Emergency response procedures revised</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-10-10</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">CON-2290</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Labeling standards updated</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-10-15</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">NCI-8850</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Personal protective equipment requirements enhanced</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-10-20</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">NEU-1234</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Disposal methods reviewed and approved</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-10-25</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">CAR-5678</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Training session completed for lab staff</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-10-30</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">IMM-9012</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Risk assessment updated</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-11-02</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">INF-3456</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Compliance audit passed</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-11-05</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">RAR-7890</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">Safety data sheet revised</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;">2025-11-10</td>
+                        <td style="padding: 12px; border-bottom: 1px solid var(--border-light); text-align: center;"><button class="reportButton" onclick="document.getElementById('productModal').style.display = 'block';">Here</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="report-button-container">
+                  <button class="reportButton">Download Safety Log</button>
+                </div>
+              </div>`;
+          }
+
+        // Global functions for customer home
+        window.filterChemicals = function() {
+          const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+          const classFilter = document.getElementById('classFilter')?.value || '';
+          const productFilter = document.getElementById('filterProduct')?.value || '';
+
+          const filteredChemicals = chemicals.filter(chem => {
+            const matchesSearch = !searchTerm || chem.name.toLowerCase().includes(searchTerm) || chem.cas.includes(searchTerm);
+            const matchesClass = !classFilter || chem.classification === classFilter;
+            const matchesProduct = !productFilter || productFilter === 'All' || chem.classification === productFilter;
+            return matchesSearch && matchesClass && matchesProduct;
+          });
+
+          const tbody = document.getElementById('chemicalTableBody');
+          if (tbody) {
+            tbody.innerHTML = filteredChemicals.map(chem => `
+              <tr>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.name}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.cas}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.classification}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.stock}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${chem.price}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-light);"><button class="reportButton" onclick="viewProduct('${chem.name}')">View</button></td>
+              </tr>
+            `).join('');
+          }
+        };
+
+        window.viewProduct = function(name) {
+          // Switch to Products tab and show the product
+          currentNav = 'Products';
+          renderSidebar();
+          renderContent();
+          // Could add logic to show specific product based on name
+        };
+
+        // 1. Map Stuff
+        const dashboardData = {
+            weekly: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7'],
+            chartData: [950, 1200, 1100, 1600, 1400, 2100, 1850],
+            restocked: '1,402',
+            waste: '12,840 kg',
+            warehouses: '08'
+            },
+            monthly: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jul', 'Aug'],
+            chartData: [5400, 6200, 5800, 7100, 2000, 7282, 2],
+            restocked: '5,890',
+            waste: '48,210 kg',
+            warehouses: '12'
+            },
+            yearly: {
+            labels: ['2020', '2021', '2022', '2023', '2024', '2025'],
+            chartData: [22000, 25000, 21000, 28000, 31000, 29000],
+            restocked: '72,140',
+            waste: '512,000 kg',
+            warehouses: '15'
+            }
+        };
+
+        // 2. Chart Stuff
+        let wasteChart = new Chart(ctx, {
+            data: {
+            labels: dashboardData.weekly.labels,
+            datasets: [
+                {
+                type: 'line',
+                label: 'Trend',
+                data: dashboardData.weekly.chartData,
+                borderColor: '#CC0000',
+                borderWidth: 2,
+                pointRadius: 3,
+                tension: 0.4,
+                fill: false
+                },
+                {
+                type: 'bar',
+                label: 'Volume',
+                data: dashboardData.weekly.chartData,
+                backgroundColor: 'rgba(204, 0, 0, 0.2)',
+                borderRadius: 4
+                }
+            ]
+            },
+            options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+            }
+        });
+
+        // 3. Update things
+        function updateDashboard() {
+            const period = document.getElementById('timelineSelect').value;
+            const data = dashboardData[period];
+
+            // Update Chart
+            wasteChart.data.labels = data.labels;
+            wasteChart.data.datasets[0].data = data.chartData;
+            wasteChart.data.datasets[1].data = data.chartData;
+            wasteChart.update();
+
+            // Update Stats
+            document.getElementById('stat-restocked').innerText = data.restocked;
+            document.getElementById('stat-waste').innerText = data.waste;
+            document.getElementById('stat-warehouses').innerText = data.warehouses;
+
+        // Need to make sure to add different pages and top buttons
+        }
+
+      renderSidebar();
+
+      document.getElementById('confirmLogout').onclick = () => {
+        document.getElementById('logoutModal').style.display = 'none';
+        alert('Logged out!');
+      };
+      document.getElementById('cancelLogout').onclick = () => {
+        document.getElementById('logoutModal').style.display = 'none';
+      };
+      document.getElementById('closeProductModal').onclick = () => {
+        document.getElementById('productModal').style.display = 'none';
+      };
+    </script>
+</body>
+</div>
