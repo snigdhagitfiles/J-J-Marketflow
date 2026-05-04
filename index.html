@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J&J MarketFlow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #111; color: #f0f0f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── Top Nav ── */
+    .top-nav { display: flex; align-items: center; background: #111; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 0 24px; height: 44px; flex-shrink: 0; gap: 2px; }
+    .brand { font-family: Georgia, serif; font-size: 15px; font-style: italic; font-weight: 700; color: #CC0000; margin-right: 20px; letter-spacing: -0.3px; white-space: nowrap; }
+    .tab { padding: 0 20px; height: 100%; display: flex; align-items: center; font-size: 12px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; white-space: nowrap; user-select: none; }
+    .tab:hover { color: #f0f0f0; }
+    .tab.active { color: #f0f0f0; border-bottom-color: #CC0000; font-weight: 600; }
+
+    /* ── Iframe container ── */
+    .view { display: none; flex: 1; }
+    .view.active { display: flex; }
+    iframe { width: 100%; height: 100%; border: none; flex: 1; }
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="brand">J &amp; J MarketFlow</div>
+    <div class="tab active" data-view="analytics">Analytics</div>
+    <div class="tab" data-view="waste">Waste Mgmt</div>
+    <div class="tab" data-view="admin">Admin</div>
+    <div class="tab" data-view="retail">Retail</div>
+  </div>
+
+  <div class="view active" id="view-analytics">
+    <iframe src="Analytics_View.html" title="Analytics"></iframe>
+  </div>
+  <div class="view" id="view-waste">
+    <iframe src="End_User___Labs_Institutions_.html" title="Waste Management"></iframe>
+  </div>
+  <div class="view" id="view-admin">
+    <iframe src="Admin___IT_View.html" title="Admin"></iframe>
+  </div>
+  <div class="view" id="view-retail">
+    <iframe src="Retail.html" title="Retail"></iframe>
+  </div>
+
+  <script>
+    var tabs = document.querySelectorAll('.tab');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+        document.getElementById('view-' + tab.dataset.view).classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+</html>
