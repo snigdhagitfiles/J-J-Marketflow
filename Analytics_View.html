@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J&J MarketFlow Analytics Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #CC0000;
+      --red-light: #F5E6E6;
+      --red-dark: #990000;
+      --sidebar-w: 190px;
+      --font: 'DM Sans', sans-serif;
+      --mono: 'DM Mono', monospace;
+
+      --bg-primary: #ffffff;
+      --bg-secondary: #F7F6F4;
+      --bg-tertiary: #EFEDE9;
+      --text-primary: #1A1A1A;
+      --text-secondary: #5F5E5A;
+      --text-tertiary: #9A9894;
+      --border-light: rgba(0,0,0,0.08);
+      --border-med: rgba(0,0,0,0.13);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1E1E1C;
+        --bg-secondary: #252523;
+        --bg-tertiary: #161614;
+        --text-primary: #F0EEE8;
+        --text-secondary: #A8A69E;
+        --text-tertiary: #6A6864;
+        --border-light: rgba(255,255,255,0.08);
+        --border-med: rgba(255,255,255,0.14);
+        --red-light: #2A1010;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg-primary);
+      border-right: 0.5px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-brand {
+      padding: 18px 16px 12px;
+      border-bottom: 0.5px solid var(--border-light);
+    }
+    .jj-logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--red);
+      font-family: var(--mono);
+      letter-spacing: -0.5px;
+    }
+    .brand-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--red);
+      letter-spacing: 0.4px;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+    .brand-sub {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .nav-items { flex: 1; padding: 8px 0; overflow-y: auto; }
+    .nav-section {
+      padding: 10px 16px 4px;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: block;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background 0.12s, color 0.12s;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .nav-item.active {
+      color: var(--red);
+      border-left-color: var(--red);
+      background: var(--red-light);
+      font-weight: 500;
+    }
+    .sidebar-bottom {
+      padding: 12px 14px 14px;
+      border-top: 0.5px solid var(--border-light);
+    }
+    .logout-btn {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: var(--font);
+      background: transparent;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      transition: background 0.12s;
+    }
+    .logout-btn:hover { background: var(--bg-secondary); }
+    .filter-btn {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: var(--font);
+      background: var(--red);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: #fff;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .filter-label {
+      font-size: 10px;
+      color: var(--red);
+      font-weight: 600;
+      margin-bottom: 3px;
+      margin-top: 8px;
+    }
+    .filter-select {
+      width: 100%;
+      padding: 5px 7px;
+      font-size: 11px;
+      font-family: var(--font);
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+    }
+    .apply-btn {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-family: var(--font);
+      background: transparent;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      transition: background 0.12s;
+    }
+    .apply-btn:hover { background: var(--bg-secondary); }
+
+    /* ── Main ── */
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
+
+    /* ── Topbar ── */
+    .topbar {
+      padding: 12px 22px;
+      border-bottom: 0.5px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-primary);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .page-title { font-size: 18px; font-weight: 600; color: var(--red); }
+    .role-tabs {
+      display: flex;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .role-tab {
+      padding: 6px 14px;
+      font-size: 11px;
+      font-family: var(--font);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-weight: 400;
+      transition: background 0.12s, color 0.12s;
+    }
+    .role-tab:not(:last-child) { border-right: 0.5px solid var(--border-light); }
+    .role-tab.active { background: var(--red); color: #fff; font-weight: 500; }
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border: 0.5px solid var(--border-light);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #E6F1FB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: #185FA5;
+      flex-shrink: 0;
+    }
+
+    /* ── Content ── */
+    .content { padding: 20px 22px; flex: 1; }
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 0.5px solid var(--border-light);
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+    .kpi-label { font-size: 10px; color: var(--text-tertiary); margin-bottom: 5px; font-weight: 500; }
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--mono);
+      letter-spacing: -0.5px;
+    }
+    .kpi-value.red { color: var(--red); }
+
+    /* ── Chart cards ── */
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 780px) { .chart-row { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+    }
+    .chart-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      letter-spacing: 0.2px;
+    }
+    .chart-wrap { position: relative; width: 100%; height: 180px; }
+
+    /* ── Tables ── */
+    .table-section {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--red); }
+    thead th {
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 9px 12px;
+      text-align: left;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 0.5px solid var(--border-light); }
+    tbody tr:last-child { border: none; }
+    tbody tr:hover { background: var(--bg-secondary); }
+    tbody tr.flagged { background: #FCEBEB; }
+    tbody td {
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+    .td-mono { font-family: var(--mono); }
+    .td-red { color: var(--red); font-weight: 600; }
+
+    /* ── Badges ── */
+    .flag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #F7C1C1;
+      color: #A32D2D;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+    .badge-ok { background: #EAF3DE; color: #3B6D11; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+    .badge-warn { background: #FAEEDA; color: #854F0B; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+    .accuracy-badge { background: #EAF3DE; color: #3B6D11; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+
+    /* ── Footer actions ── */
+    .footer-actions {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0 4px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .dl-btn {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-family: var(--font);
+      background: transparent;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background 0.12s;
+    }
+    .dl-btn:hover { background: var(--bg-secondary); }
+
+    /* ── Forecast bars ── */
+    .forecast-metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 0.5px solid var(--border-light);
+    }
+    .forecast-metric:last-child { border: none; }
+    .forecast-bar-bg {
+      height: 6px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      width: 110px;
+      overflow: hidden;
+    }
+    .forecast-bar { height: 6px; background: var(--red); border-radius: 3px; }
+
+    /* ── Access denied ── */
+    .access-denied {
+      background: #FCEBEB;
+      border: 0.5px solid #F7C1C1;
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      color: #A32D2D;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .lock-icon {
+      width: 22px;
+      height: 22px;
+      background: #F7C1C1;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .access-denied-title { font-weight: 600; margin-bottom: 3px; }
+    .access-denied-msg { font-size: 12px; color: #993556; }
+
+    /* ── Audit log ── */
+    .audit-log {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 4px 16px 4px;
+      margin-bottom: 20px;
+    }
+    .audit-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 9px 0;
+      border-bottom: 0.5px solid var(--border-light);
+      font-size: 12px;
+    }
+    .audit-row:last-child { border: none; }
+    .audit-time {
+      color: var(--text-tertiary);
+      font-family: var(--mono);
+      font-size: 11px;
+      min-width: 72px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .audit-action { color: var(--text-primary); flex: 1; }
+    .audit-user { color: var(--red); font-weight: 500; }
+
+    /* ── Chart legend ── */
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="jj-logo">J&amp;J</div>
+      <div class="brand-title">MarketFlow<br>Analytics</div>
+      <div class="brand-sub">Johnson &amp; Johnson</div>
+    </div>
+    <div class="nav-items" id="navItems"></div>
+    <div class="sidebar-bottom" id="sidebarBottom"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="page-title">Overview</div>
+        <div class="role-tabs">
+          <button class="role-tab active" onclick="switchRole('marketing', this)">Marketing Analyst</button>
+          <button class="role-tab" onclick="switchRole('executive', this)">Executive Leader</button>
+          <button class="role-tab" onclick="switchRole('compliance', this)">Compliance Officer</button>
+        </div>
+      </div>
+      <div class="user-badge">
+        <div class="avatar" id="avatarEl">MA</div>
+        <span id="roleLabel">Role: Marketing Analyst</span>
+      </div>
+    </div>
+    <div class="content" id="mainContent"></div>
+  </div>
+</div>
+
+<script>
+  /* ─── State ─── */
+  let currentRole = 'marketing';
+  let charts = {};
+
+  const roleConfig = {
+    marketing: {
+      label: 'Role: Marketing Analyst',
+      avatar: 'MA',
+      nav: ['Dashboard', 'Campaign Analytics', 'SKU Reports', 'Demographics'],
+      active: 'Dashboard',
+      filters: true
+    },
+    executive: {
+      label: 'Role: Executive Leader',
+      avatar: 'EL',
+      nav: ['Dashboard', 'Forecasting', 'Financial Trends'],
+      active: 'Dashboard',
+      filters: false
+    },
+    compliance: {
+      label: 'Role: Compliance Officer',
+      avatar: 'CO',
+      nav: ['Dashboard', 'Chemical Trends', 'Audit Logs', 'Regulatory Reports'],
+      active: 'Dashboard',
+      filters: false
+    }
+  };
+
+  /* ─── Helpers ─── */
+  function destroyCharts() {
+    Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} });
+    charts = {};
+  }
+
+  function canvasEl(id) {
+    return `<div class="chart-wrap"><canvas id="${id}" role="img" aria-label="${id} data chart"></canvas></div>`;
+  }
+
+  /* ─── Role Switch ─── */
+  function switchRole(role, btn) {
+    destroyCharts();
+    currentRole = role;
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('roleLabel').textContent = roleConfig[role].label;
+    document.getElementById('avatarEl').textContent = roleConfig[role].avatar;
+    renderSidebar();
+    renderContent();
+  }
+
+  /* ─── Sidebar ─── */
+  function renderSidebar() {
+    const r = roleConfig[currentRole];
+
+    // Nav
+    const nav = document.getElementById('navItems');
+    nav.innerHTML = '';
+    r.nav.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (item === r.active ? ' active' : '');
+      el.textContent = item;
+      el.onclick = () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+      };
+      nav.appendChild(el);
+    });
+
+    // Bottom
+    const bottom = document.getElementById('sidebarBottom');
+    bottom.innerHTML = '';
+
+    const logout = document.createElement('button');
+    logout.className = 'logout-btn';
+    logout.textContent = 'Logout';
+    bottom.appendChild(logout);
+
+    if (r.filters) {
+      const fbtn = document.createElement('button');
+      fbtn.className = 'filter-btn';
+      fbtn.textContent = 'Filter Panel';
+      bottom.appendChild(fbtn);
+
+      const filterDefs = [
+        { label: 'Date Range', id: 'f-date', opts: ['All Time', 'Weekly', 'Monthly', 'Quarterly', 'Yearly'] },
+        { label: 'Product Classification', id: 'f-product', opts: ['All', 'Neuroscience', 'Oncology', 'Infectious Diseases', 'Consumer'] },
+        { label: 'Region', id: 'f-region', opts: ['All Regions', 'North America', 'Europe', 'APAC', 'Africa'] },
+        { label: 'Customer Demographic', id: 'f-demo', opts: ['All', 'Retail Buyers', 'Labs', 'Consumers'] }
+      ];
+
+      filterDefs.forEach(f => {
+        const lbl = document.createElement('div');
+        lbl.className = 'filter-label';
+        lbl.textContent = f.label;
+        bottom.appendChild(lbl);
+
+        const sel = document.createElement('select');
+        sel.className = 'filter-select';
+        sel.id = f.id;
+        f.opts.forEach(o => {
+          const opt = document.createElement('option');
+          opt.textContent = o;
+          sel.appendChild(opt);
+        });
+        bottom.appendChild(sel);
+      });
+
+      const apply = document.createElement('button');
+      apply.className = 'apply-btn';
+      apply.textContent = 'Apply Filter';
+      bottom.appendChild(apply);
+    }
+  }
+
+  /* ─── Content Renderers ─── */
+  function renderContent() {
+    const el = document.getElementById('mainContent');
+    if (currentRole === 'marketing') el.innerHTML = marketingHTML();
+    else if (currentRole === 'executive') el.innerHTML = executiveHTML();
+    else el.innerHTML = complianceHTML();
+    setTimeout(() => {
+      if (currentRole === 'marketing') initMarketingCharts();
+      else if (currentRole === 'executive') initExecutiveCharts();
+      else initComplianceCharts();
+    }, 60);
+  }
+
+  /* ── Marketing View ── */
+  function marketingHTML() {
+    return `
+      <div class="section-label">KPI Summary</div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Total Revenue</div><div class="kpi-value red">$48.2M</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Orders</div><div class="kpi-value">12,847</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg Order Value</div><div class="kpi-value">$3,751</div></div>
+        <div class="kpi-card"><div class="kpi-label">Search Frequency</div><div class="kpi-value">24.1K</div></div>
+        <div class="kpi-card"><div class="kpi-label">Active Campaigns</div><div class="kpi-value red">7</div></div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-title">Revenue Trend — Monthly</div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-swatch" style="background:#CC0000"></span>Revenue ($M)</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#1A1A1A;border-radius:50%"></span>Trend Line</span>
+          </div>
+          ${canvasEl('revChart')}
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Demographic Trend Graph</div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-swatch" style="background:#CC0000"></span>Retail Buyers</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#990000"></span>Labs</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#F5C4B3"></span>Consumers</span>
+          </div>
+          ${canvasEl('demoChart')}
+        </div>
+      </div>
+
+      <div class="section-label">Campaign Performance Table</div>
+      <div class="table-section">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>SKU</th>
+              <th>Sales</th>
+              <th>Search Frequency</th>
+              <th>ROI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>211</td><td>285</td><td>515</td><td>3,394</td>
+              <td class="td-red td-mono">$10,000,000</td>
+            </tr>
+            <tr>
+              <td>13</td><td>15</td><td>38</td><td>293</td>
+              <td class="td-mono">$38,758,527</td>
+            </tr>
+            <tr>
+              <td>6</td><td>8</td><td>26</td><td>3,902</td>
+              <td class="td-mono">$9,838,496</td>
+            </tr>
+            <tr>
+              <td>87</td><td>35</td><td>41</td><td>1,031</td>
+              <td class="td-mono">$1,048,085</td>
+            </tr>
+            <tr style="background:var(--red-light)">
+              <td>36</td><td>44</td><td>86</td><td>324</td>
+              <td class="td-red td-mono">$113,274,767</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="footer-actions">
+        <button class="dl-btn">Export Report</button>
+        <button class="dl-btn">Download SKU Report</button>
+      </div>`;
+  }
+
+  /* ── Executive View ── */
+  function executiveHTML() {
+    const forecastData = [
+      { cat: 'Neuroscience', pct: 91 },
+      { cat: 'Oncology', pct: 88 },
+      { cat: 'Infectious Diseases', pct: 86 },
+      { cat: 'Consumer Products', pct: 94 }
+    ];
+    const forecastRows = forecastData.map(f => `
+      <div class="forecast-metric">
+        <span style="font-size:12px;color:var(--text-secondary)">${f.cat}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="forecast-bar-bg"><div class="forecast-bar" style="width:${f.pct}%"></div></div>
+          <span class="accuracy-badge">${f.pct}%</span>
+        </div>
+      </div>`).join('');
+
+    return `
+      <div class="section-label">KPI Overview Panel</div>
+      <div class="kpi-grid" style="margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-label">Total Revenue</div><div class="kpi-value red">$48.2M</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Orders</div><div class="kpi-value">12,847</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg Order Value</div><div class="kpi-value">$3,751</div></div>
+        <div class="kpi-card"><div class="kpi-label">Backorder %</div><div class="kpi-value red">2.4%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Inventory Turnover</div><div class="kpi-value">8.3x</div></div>
+      </div>
+
+      <div class="section-label">Trend Analysis Graph</div>
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-title">Monthly Revenue &amp; Orders Over Time</div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-swatch" style="background:#CC0000"></span>Revenue</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#990000;border-radius:50%"></span>Orders</span>
+        </div>
+        ${canvasEl('execTrend')}
+      </div>
+
+      <div class="section-label">Demand Forecast Panel</div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-title">AI Demand Prediction</div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-swatch" style="background:#CC0000"></span>Europe</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#F5C4B3"></span>America</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#1A1A1A;border-radius:50%"></span>Forecast</span>
+          </div>
+          ${canvasEl('demandChart')}
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Forecast Accuracy by Classification</div>
+          ${forecastRows}
+        </div>
+      </div>
+      <div class="footer-actions" style="margin-top:10px">
+        <button class="dl-btn">Generate Forecast Report</button>
+        <button class="dl-btn">Download Budget Forecast</button>
+      </div>`;
+  }
+
+  /* ── Compliance View ── */
+  function complianceHTML() {
+    const auditEntries = [
+      ['09:14:02', 'SKU NCI-4482 qty adjusted: 500→420', 'admin.torres'],
+      ['09:31:47', 'Reorder triggered: ONC-7731 below threshold', 'sys.auto'],
+      ['10:05:18', 'INF-1105 export restricted — compliance hold', 'compliance.patel'],
+      ['10:22:33', 'SKU CON-2290 inventory reconciled', 'warehouse.chen'],
+      ['11:01:09', 'NCI-8850 demand spike — alert raised', 'sys.monitor'],
+      ['11:44:55', 'Budget forecast regenerated for Q3', 'exec.kumar'],
+      ['12:10:33', 'Chemical trend report accessed', 'compliance.officer'],
+      ['12:38:12', 'Audit log export requested', 'compliance.patel']
+    ];
+    const auditRows = auditEntries.map(([t, a, u]) => `
+      <div class="audit-row">
+        <span class="audit-time">${t}</span>
+        <span class="audit-action">${a} — <span class="audit-user">${u}</span></span>
+      </div>`).join('');
+
+    return `
+      <div class="section-label">Restricted Chemical Demand Trends</div>
+      <div class="table-section" style="margin-bottom:20px">
+        <table>
+          <thead>
+            <tr>
+              <th>Chemical / SKU</th>
+              <th>Classification</th>
+              <th>Hazard Level</th>
+              <th>Search Trend</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="flagged">
+              <td>NCI-4482</td>
+              <td>Neuroscience</td>
+              <td style="color:#A32D2D;font-weight:600">HIGH</td>
+              <td>↑ 34%</td>
+              <td><span class="flag-badge">⚑ FLAGGED</span></td>
+            </tr>
+            <tr>
+              <td>ONC-7731</td>
+              <td>Oncology</td>
+              <td style="color:#854F0B;font-weight:600">MEDIUM</td>
+              <td>↑ 12%</td>
+              <td><span class="badge-warn">Monitoring</span></td>
+            </tr>
+            <tr class="flagged">
+              <td>INF-1105</td>
+              <td>Infectious Diseases</td>
+              <td style="color:#A32D2D;font-weight:600">HIGH</td>
+              <td>↑ 61%</td>
+              <td><span class="flag-badge">⚑ FLAGGED</span></td>
+            </tr>
+            <tr>
+              <td>CON-2290</td>
+              <td>Consumer</td>
+              <td style="color:#3B6D11;font-weight:600">LOW</td>
+              <td>→ 2%</td>
+              <td><span class="badge-ok">Compliant</span></td>
+            </tr>
+            <tr>
+              <td>NCI-8850</td>
+              <td>Neuroscience</td>
+              <td style="color:#854F0B;font-weight:600">MEDIUM</td>
+              <td>↑ 18%</td>
+              <td><span class="badge-warn">Monitoring</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-label">Audit Log — Inventory Changes</div>
+      <div class="audit-log">${auditRows}</div>
+
+      <div class="section-label">Marketing Role — Chemical Trends Access</div>
+      <div class="access-denied">
+        <div class="lock-icon">🔒</div>
+        <div>
+          <div class="access-denied-title">Access Restricted</div>
+          <div class="access-denied-msg">Marketing Analyst role cannot view restricted chemical search trend analytics. Contact your compliance officer for escalation. (FR 45)</div>
+        </div>
+      </div>
+
+      <div class="section-label">Chemical Search Trend Volume — Last 6 Months</div>
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-swatch" style="background:#E24B4A"></span>High Hazard</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#F7C1C1"></span>Medium Hazard</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:#A32D2D;border-radius:50%"></span>Flagged Trend</span>
+        </div>
+        ${canvasEl('chemChart')}
+      </div>
+      <div class="footer-actions">
+        <button class="dl-btn">Export Compliance Report</button>
+        <button class="dl-btn">Download Audit Log</button>
+      </div>`;
+  }
+
+  /* ─── Chart Initializers ─── */
+  const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } }
+  };
+
+  function initMarketingCharts() {
+    const revCtx = document.getElementById('revChart');
+    if (revCtx) {
+      charts.rev = new Chart(revCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+          datasets: [
+            {
+              type: 'line',
+              label: 'Trend',
+              data: [28, 32, 30, 35, 38, 41, 44, 48],
+              borderColor: '#1A1A1A',
+              backgroundColor: 'transparent',
+              borderWidth: 1.5,
+              pointRadius: 3,
+              pointBackgroundColor: '#1A1A1A',
+              tension: 0.4,
+              yAxisID: 'y'
+            },
+            {
+              type: 'bar',
+              label: 'Revenue ($M)',
+              data: [26, 30, 29, 34, 37, 40, 43, 47],
+              backgroundColor: '#CC0000',
+              yAxisID: 'y'
+            }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            y: { ticks: { font: { size: 10 }, callback: v => v + 'M' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const demoCtx = document.getElementById('demoChart');
+    if (demoCtx) {
+      charts.demo = new Chart(demoCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Aug 1', 'Aug 14', 'Aug 28'],
+          datasets: [
+            { label: 'Retail Buyers', data: [42, 55, 60], backgroundColor: '#CC0000' },
+            { label: 'Labs', data: [28, 30, 35], backgroundColor: '#990000' },
+            { label: 'Consumers', data: [15, 20, 22], backgroundColor: '#F5C4B3' }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
+            y: { stacked: true, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+          }
+        }
+      });
+    }
+  }
+
+  function initExecutiveCharts() {
+    const tCtx = document.getElementById('execTrend');
+    if (tCtx) {
+      charts.trend = new Chart(tCtx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+          datasets: [
+            {
+              label: 'Revenue ($M)',
+              data: [32, 35, 33, 38, 41, 44, 47, 48, 50, 53],
+              borderColor: '#CC0000',
+              backgroundColor: 'rgba(204,0,0,0.08)',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointBackgroundColor: '#CC0000',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Orders (K)',
+              data: [9, 10, 9.5, 11, 12, 13, 12.5, 12.8, 13.5, 14],
+              borderColor: '#990000',
+              backgroundColor: 'transparent',
+              borderWidth: 1.5,
+              borderDash: [4, 3],
+              pointRadius: 2,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const dCtx = document.getElementById('demandChart');
+    if (dCtx) {
+      charts.demand = new Chart(dCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Series 1', 'Series 2', 'Series 3'],
+          datasets: [
+            {
+              type: 'line',
+              label: 'Forecast',
+              data: [8, 11, 10],
+              borderColor: '#1A1A1A',
+              backgroundColor: 'transparent',
+              borderWidth: 1.5,
+              pointRadius: 3,
+              tension: 0.4
+            },
+            { label: 'Europe', data: [7, 10, 9], backgroundColor: '#CC0000' },
+            { label: 'America', data: [4, 6, 5], backgroundColor: '#F5C4B3' }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            y: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+  }
+
+  function initComplianceCharts() {
+    const cCtx = document.getElementById('chemChart');
+    if (cCtx) {
+      charts.chem = new Chart(cCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+          datasets: [
+            {
+              type: 'line',
+              label: 'Flagged Trend',
+              data: [12, 14, 13, 18, 22, 28],
+              borderColor: '#A32D2D',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [4, 3],
+              pointRadius: 3,
+              tension: 0.4
+            },
+            { label: 'High Hazard', data: [8, 9, 8, 14, 18, 22], backgroundColor: '#E24B4A' },
+            { label: 'Medium Hazard', data: [4, 5, 5, 4, 4, 6], backgroundColor: '#F7C1C1' }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
+            y: { stacked: true, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+          }
+        }
+      });
+    }
+  }
+
+  /* ─── Init ─── */
+  renderSidebar();
+  renderContent();
+</script>
+</body>
+</html>
