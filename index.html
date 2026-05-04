@@ -7,11 +7,80 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #111; color: #f0f0f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    .top-nav { display: flex; align-items: center; justify-content: space-between; background: #0d0d0d; border-bottom: 2px solid rgba(204,0,0,0.35); padding: 0 24px; height: 48px; flex-shrink: 0; }
-    .brand { font-family: Georgia, serif; font-size: 16px; font-style: italic; font-weight: 700; color: #CC0000; letter-spacing: -0.3px; white-space: nowrap; }
+    body { font-family: 'Inter', sans-serif; background: #0d0d0d; color: #f0f0f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── LOGIN PAGE ── */
+    #login-page {
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh; width: 100%;
+      background: radial-gradient(ellipse at 60% 40%, rgba(204,0,0,0.12) 0%, transparent 60%), #0d0d0d;
+    }
+    .login-box {
+      background: #161616; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: 44px 40px; width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .login-logo {
+      font-family: Georgia, serif; font-size: 13px; font-style: italic;
+      color: #888; letter-spacing: 0.3px; margin-bottom: 6px;
+    }
+    .login-title {
+      font-family: Georgia, serif; font-size: 26px; font-style: italic;
+      font-weight: 700; color: #CC0000; margin-bottom: 4px; letter-spacing: -0.5px;
+    }
+    .login-sub {
+      font-size: 11px; color: #555; margin-bottom: 32px;
+    }
+    .login-label {
+      font-size: 10px; font-weight: 600; color: #666; letter-spacing: 0.8px;
+      text-transform: uppercase; margin-bottom: 6px; display: block;
+    }
+    .login-input, .login-select {
+      width: 100%; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 11px 14px; font-size: 13px; color: #f0f0f0;
+      font-family: 'Inter', sans-serif; outline: none; margin-bottom: 18px;
+      transition: border-color 0.15s;
+    }
+    .login-input:focus, .login-select:focus { border-color: rgba(204,0,0,0.5); }
+    .login-select option { background: #1e1e1e; color: #f0f0f0; }
+    .login-btn {
+      width: 100%; background: #CC0000; border: none; border-radius: 8px;
+      padding: 12px; font-size: 13px; font-weight: 600; color: #fff;
+      cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 4px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .login-btn:hover { background: #aa0000; }
+    .login-btn:active { transform: scale(0.98); }
+    .login-error {
+      font-size: 11px; color: #FF6666; margin-top: 10px;
+      text-align: center; display: none;
+    }
+    .login-divider {
+      height: 1px; background: rgba(255,255,255,0.07); margin: 28px 0;
+    }
+    .login-hint {
+      font-size: 10px; color: #444; text-align: center; line-height: 1.6;
+    }
+
+    /* ── MAIN SITE ── */
+    #main-site { display: none; flex-direction: column; height: 100vh; }
+    .top-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #0d0d0d; border-bottom: 2px solid rgba(204,0,0,0.35);
+      padding: 0 24px; height: 48px; flex-shrink: 0;
+    }
+    .brand {
+      font-family: Georgia, serif; font-size: 16px; font-style: italic;
+      font-weight: 700; color: #CC0000; letter-spacing: -0.3px; white-space: nowrap;
+    }
     .tabs { display: flex; align-items: center; height: 100%; }
-    .tab { padding: 0 22px; height: 100%; display: flex; align-items: center; font-size: 12px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.15s, border-color 0.15s, background 0.15s; white-space: nowrap; user-select: none; letter-spacing: 0.2px; }
+    .tab {
+      padding: 0 22px; height: 100%; display: flex; align-items: center;
+      font-size: 12px; font-weight: 500; color: #666; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      white-space: nowrap; user-select: none; letter-spacing: 0.2px;
+    }
     .tab:hover { color: #f0f0f0; background: rgba(255,255,255,0.04); }
     .tab.active { color: #fff; border-bottom-color: #CC0000; font-weight: 600; background: rgba(204,0,0,0.08); }
     .view { display: none; flex: 1; }
@@ -20,29 +89,113 @@
   </style>
 </head>
 <body>
-  <div class="top-nav">
-    <div class="brand">J &amp; J MarketFlow</div>
-    <div class="tabs">
-      <div class="tab active" data-view="analytics">Analytics</div>
-      <div class="tab" data-view="waste">Waste Mgmt</div>
-      <div class="tab" data-view="admin">Admin</div>
-      <div class="tab" data-view="retail">Retail</div>
+
+  <!-- ── LOGIN PAGE ── -->
+  <div id="login-page">
+    <div class="login-box">
+      <div class="login-logo">Johnson &amp; Johnson</div>
+      <div class="login-title">MarketFlow</div>
+      <div class="login-sub">Internal Platform · Sign in to continue</div>
+
+      <label class="login-label">Username</label>
+      <input class="login-input" id="username" type="text" placeholder="Enter your username" />
+
+      <label class="login-label">Password</label>
+      <input class="login-input" id="password" type="password" placeholder="Enter your password" />
+
+      <label class="login-label">Role</label>
+      <select class="login-select" id="role-select">
+        <option value="" disabled selected>Select your role</option>
+        <optgroup label="Admin">
+          <option value="admin">System Administrator</option>
+          <option value="admin">IT Administrator</option>
+        </optgroup>
+        <optgroup label="Analytics">
+          <option value="analytics">Marketing Analyst</option>
+          <option value="analytics">Executive Leader</option>
+          <option value="analytics">Compliance Officer</option>
+        </optgroup>
+        <optgroup label="Waste Management">
+          <option value="waste">Waste Manager</option>
+          <option value="waste">Customer</option>
+          <option value="waste">Lab Researcher</option>
+        </optgroup>
+        <optgroup label="Retail">
+          <option value="retail">Retail Buyer</option>
+          <option value="retail">Retail Procurement Manager</option>
+        </optgroup>
+      </select>
+
+      <button class="login-btn" onclick="handleLogin()">Sign In</button>
+      <div class="login-error" id="login-error">Please fill in all fields before signing in.</div>
+
+      <div class="login-divider"></div>
+      <div class="login-hint">J&amp;J MarketFlow · Group 4 · Spring 2026</div>
     </div>
   </div>
-  <div class="view active" id="view-analytics"><iframe src="Analytics.html" title="Analytics"></iframe></div>
-  <div class="view" id="view-waste"><iframe src="Waste.html" title="Waste Management" referrerpolicy="no-referrer"></iframe></div>
-  <div class="view" id="view-admin"><iframe src="Admin.html" title="Admin"></iframe></div>
-  <div class="view" id="view-retail"><iframe src="Retail.html" title="Retail"></iframe></div>
+
+  <!-- ── MAIN SITE ── -->
+  <div id="main-site">
+    <div class="top-nav">
+      <div class="brand">J &amp; J MarketFlow</div>
+      <div class="tabs">
+        <div class="tab" data-view="analytics">Analytics</div>
+        <div class="tab" data-view="waste">Waste Mgmt</div>
+        <div class="tab" data-view="admin">Admin</div>
+        <div class="tab" data-view="retail">Retail</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-analytics"><iframe src="Analytics.html" title="Analytics"></iframe></div>
+    <div class="view" id="view-waste"><iframe src="Waste.html" title="Waste Management" referrerpolicy="no-referrer"></iframe></div>
+    <div class="view" id="view-admin"><iframe src="Admin.html" title="Admin"></iframe></div>
+    <div class="view" id="view-retail"><iframe src="Retail.html" title="Retail"></iframe></div>
+  </div>
+
   <script>
-    var tabs = document.querySelectorAll('.tab');
-    tabs.forEach(function(tab) {
+    function handleLogin() {
+      var username = document.getElementById('username').value.trim();
+      var password = document.getElementById('password').value.trim();
+      var role = document.getElementById('role-select').value;
+      var error = document.getElementById('login-error');
+
+      if (!username || !password || !role) {
+        error.style.display = 'block';
+        return;
+      }
+      error.style.display = 'none';
+
+      // Hide login, show main site
+      document.getElementById('login-page').style.display = 'none';
+      var main = document.getElementById('main-site');
+      main.style.display = 'flex';
+
+      // Activate the correct tab
+      var tabs = document.querySelectorAll('.tab');
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+
+      var targetTab = document.querySelector('.tab[data-view="' + role + '"]');
+      if (targetTab) targetTab.classList.add('active');
+      var targetView = document.getElementById('view-' + role);
+      if (targetView) targetView.classList.add('active');
+    }
+
+    // Allow pressing Enter to login
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') handleLogin();
+    });
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
-        tabs.forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
         tab.classList.add('active');
         document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
         document.getElementById('view-' + tab.dataset.view).classList.add('active');
       });
     });
   </script>
+
 </body>
 </html>
