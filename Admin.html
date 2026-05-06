@@ -282,10 +282,11 @@
 <body>
 <div class="app-shell">
 
-  <!-- ── ROLE SWITCHER ── -->
-  <div style="display:flex;align-items:center;background:#161616;border-bottom:1px solid rgba(255,255,255,0.07);padding:0 20px;height:36px;flex-shrink:0;gap:2px;">
-    <div class="top-tab active" data-role="admin" style="font-size:11px;padding:0 16px;height:100%;">Admin</div>
-    <div class="top-tab" data-role="it" style="font-size:11px;padding:0 16px;height:100%;">IT Admin</div>
+  <!-- ── TOP TAB BAR ── -->
+  <div class="top-nav">
+    <div class="top-nav-brand">J &amp; J MarketFlow</div>
+    <div class="top-tab active" data-role="admin">Admin</div>
+    <div class="top-tab" data-role="it">IT Admin</div>
   </div>
 
   <!-- ── ADMIN ROLE VIEW ── -->
@@ -365,7 +366,7 @@
             <div class="card">
               <div class="card-title">Quick Actions</div>
               <button class="qbtn" onclick="goToPage('placeholder','🤖','AI Monitoring Coming Soon','Track AI decisions, flags, and recommendation logs here')">Review AI Alert</button>
-              <button class="qbtn" onclick="goToPage('inventory')">Manage Chemicals</button>
+              <button class="qbtn">Manage Chemicals</button>
               <button class="qbtn" onclick="goToPage('placeholder','⚗️','Risk Classification Coming Soon','Chemical hazard levels and regulatory tagging will live here')">Update Risk Classifications</button>
             </div>
           </div>
@@ -1021,6 +1022,24 @@
 </div><!-- end .app-shell -->
 
 <script>
+  // ── Helper: navigate to any admin page by key ──
+  function goToPage(pageKey, emoji, msg, sub) {
+    var allNavItems = document.querySelectorAll('#role-admin .nav-item');
+    allNavItems.forEach(function(n) { n.classList.remove('active'); });
+    Object.values({ dashboard:'page-dashboard', inventory:'page-inventory', chatbot:'page-chatbot', usermgmt:'page-usermgmt', placeholder:'page-placeholder' })
+      .forEach(function(id) { var el = document.getElementById(id); if(el) el.classList.remove('active'); });
+    var target = document.getElementById(pageKey === 'placeholder' ? 'page-placeholder' : 'page-' + pageKey);
+    if (target) target.classList.add('active');
+    var matchNav = document.querySelector('#role-admin .nav-item[data-page="' + pageKey + '"]');
+    if (matchNav) matchNav.classList.add('active');
+    if (pageKey === 'placeholder' && emoji) {
+      document.getElementById('placeholderTitle').textContent = msg || 'Coming Soon';
+      document.getElementById('placeholderEmoji').textContent = emoji;
+      document.getElementById('placeholderName').textContent = msg || 'Coming Soon';
+      document.getElementById('placeholderSub').textContent = sub || 'This tab is under construction';
+    }
+  }
+
   // ── Navigation (Admin only — exclude IT nav items) ──
   var navItems = document.querySelectorAll('#role-admin .nav-item');
   var pageMap = { dashboard: 'page-dashboard', inventory: 'page-inventory', chatbot: 'page-chatbot', usermgmt: 'page-usermgmt', placeholder: 'page-placeholder' };
@@ -1314,25 +1333,6 @@
       setTimeout(function() { card.style.display = 'none'; }, 420);
     });
   });
-
-  // ── Helper: navigate to any admin page by key ──
-  function goToPage(pageKey, emoji, msg, sub) {
-    var allNavItems = document.querySelectorAll('#role-admin .nav-item');
-    allNavItems.forEach(function(n) { n.classList.remove('active'); });
-    ['page-dashboard','page-inventory','page-chatbot','page-usermgmt','page-placeholder'].forEach(function(id) {
-      var el = document.getElementById(id); if(el) el.classList.remove('active');
-    });
-    var target = document.getElementById(pageKey === 'placeholder' ? 'page-placeholder' : 'page-' + pageKey);
-    if (target) target.classList.add('active');
-    var matchNav = document.querySelector('#role-admin .nav-item[data-page="' + pageKey + '"]');
-    if (matchNav) matchNav.classList.add('active');
-    if (pageKey === 'placeholder' && emoji) {
-      document.getElementById('placeholderTitle').textContent = msg || 'Coming Soon';
-      document.getElementById('placeholderEmoji').textContent = emoji;
-      document.getElementById('placeholderName').textContent = msg || 'Coming Soon';
-      document.getElementById('placeholderSub').textContent = sub || 'This tab is under construction';
-    }
-  }
 
   // ── TOP TAB SWITCHER ──
   document.querySelectorAll('.top-tab').forEach(function(tab) {
