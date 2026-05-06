@@ -340,12 +340,12 @@
         <div class="two-col">
           <div class="col">
             <div class="card">
-              <div class="card-title">User Role Management</div>
+              <div class="card-title" onclick="goToPage('usermgmt')" style="cursor:pointer;" title="Go to User Management">User Role Management →</div>
               <div class="role-row"><span>User</span><span class="perm p-view">Limited</span><span class="edit-link">Edit · Delete</span></div>
               <div class="role-row"><span>Laboratory</span><span class="perm p-high">High</span><span class="edit-link">Edit · Delete</span></div>
               <div class="role-row"><span>Company</span><span class="perm p-med">Medium</span><span class="edit-link">Edit · Delete</span></div>
               <div class="role-row"><span>Marketing</span><span class="perm p-view">View Only</span><span class="edit-link">Edit · Delete</span></div>
-              <button class="assign-btn">+ Assign Role</button>
+              <button class="assign-btn" onclick="goToPage('usermgmt'); setTimeout(function(){ document.getElementById('umModal').style.display='flex'; }, 100);">+ Assign Role</button>
             </div>
             <div class="card">
               <div class="card-title">Chemical Approvals</div>
@@ -364,9 +364,9 @@
             </div>
             <div class="card">
               <div class="card-title">Quick Actions</div>
-              <button class="qbtn">Review AI Alert</button>
-              <button class="qbtn">Manage Chemicals</button>
-              <button class="qbtn">Update Risk Classifications</button>
+              <button class="qbtn" onclick="goToPage('placeholder','🤖','AI Monitoring Coming Soon','Track AI decisions, flags, and recommendation logs here')">Review AI Alert</button>
+              <button class="qbtn" onclick="goToPage('inventory')">Manage Chemicals</button>
+              <button class="qbtn" onclick="goToPage('placeholder','⚗️','Risk Classification Coming Soon','Chemical hazard levels and regulatory tagging will live here')">Update Risk Classifications</button>
             </div>
           </div>
         </div>
@@ -1314,6 +1314,25 @@
       setTimeout(function() { card.style.display = 'none'; }, 420);
     });
   });
+
+  // ── Helper: navigate to any admin page by key ──
+  function goToPage(pageKey, emoji, msg, sub) {
+    var allNavItems = document.querySelectorAll('#role-admin .nav-item');
+    allNavItems.forEach(function(n) { n.classList.remove('active'); });
+    ['page-dashboard','page-inventory','page-chatbot','page-usermgmt','page-placeholder'].forEach(function(id) {
+      var el = document.getElementById(id); if(el) el.classList.remove('active');
+    });
+    var target = document.getElementById(pageKey === 'placeholder' ? 'page-placeholder' : 'page-' + pageKey);
+    if (target) target.classList.add('active');
+    var matchNav = document.querySelector('#role-admin .nav-item[data-page="' + pageKey + '"]');
+    if (matchNav) matchNav.classList.add('active');
+    if (pageKey === 'placeholder' && emoji) {
+      document.getElementById('placeholderTitle').textContent = msg || 'Coming Soon';
+      document.getElementById('placeholderEmoji').textContent = emoji;
+      document.getElementById('placeholderName').textContent = msg || 'Coming Soon';
+      document.getElementById('placeholderSub').textContent = sub || 'This tab is under construction';
+    }
+  }
 
   // ── TOP TAB SWITCHER ──
   document.querySelectorAll('.top-tab').forEach(function(tab) {
